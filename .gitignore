@@ -1,0 +1,35 @@
+# Secrets — never commit
+.env
+.env.*
+*.key
+*.pem
+
+# Corpus documents stay local (public repo; payer terms of use). Manifests are committed.
+corpus/policies/**
+!corpus/policies/manifest.yaml
+!corpus/policies/README.md
+corpus/programs/**
+!corpus/programs/manifest.yaml
+!corpus/programs/README.md
+
+# Generated indexes, logs, uploads
+index/
+*.sqlite
+*.db
+governance/audit/
+uploads/
+tmp/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/

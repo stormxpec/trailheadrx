@@ -1,0 +1,164 @@
+_meta:
+  category: migraine
+  description: >
+    Migraine drugs in scope for Trailhead Rx V1. Branded CGRP-class agents and
+    other branded acute/preventive agents, plus the generic preventives and
+    triptans that form the step-therapy rungs. Program fields (dtc, copay_card,
+    pap) are placeholders to be filled from manufacturer pages with a
+    verified_on date; nothing here is a verified program term yet.
+  verified_on: null
+  notes: >
+    Benefit type matters: most agents are pharmacy benefit; Vyepti (IV) and
+    Botox (in-office injection) are typically medical benefit and follow the
+    plan's medical policy rather than the PBM's criteria.
+
+# ---------------------------------------------------------------------------
+# Branded preventives
+# ---------------------------------------------------------------------------
+preventive_branded:
+  - generic: erenumab
+    brand: Aimovig
+    manufacturer: Amgen (co-promoted with Novartis)
+    class: CGRP receptor antagonist mAb
+    route: subcutaneous, monthly
+    benefit_type: pharmacy
+    indications: [migraine prevention]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: fremanezumab
+    brand: Ajovy
+    manufacturer: Teva
+    class: CGRP ligand mAb
+    route: subcutaneous, monthly or quarterly
+    benefit_type: pharmacy
+    indications: [migraine prevention]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: galcanezumab
+    brand: Emgality
+    manufacturer: Eli Lilly
+    class: CGRP ligand mAb
+    route: subcutaneous, monthly
+    benefit_type: pharmacy
+    indications: [migraine prevention, episodic cluster headache]
+    programs:
+      dtc: "LillyDirect — listed; verify current terms"
+      copay_card: null
+      pap: null
+      bridge: null
+
+  - generic: eptinezumab
+    brand: Vyepti
+    manufacturer: Lundbeck
+    class: CGRP ligand mAb
+    route: intravenous infusion, quarterly
+    benefit_type: medical
+    indications: [migraine prevention]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: atogepant
+    brand: Qulipta
+    manufacturer: AbbVie
+    class: oral gepant (CGRP receptor antagonist)
+    route: oral, daily
+    benefit_type: pharmacy
+    indications: [episodic migraine prevention, chronic migraine prevention]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: rimegepant
+    brand: Nurtec ODT
+    manufacturer: Pfizer
+    class: oral gepant (CGRP receptor antagonist)
+    route: oral disintegrating tablet
+    benefit_type: pharmacy
+    indications: [acute migraine, episodic migraine prevention]
+    programs:
+      dtc: "PfizerForAll — listed; verify current terms"
+      copay_card: null
+      pap: null
+      bridge: null
+
+  - generic: onabotulinumtoxinA
+    brand: Botox
+    manufacturer: AbbVie
+    class: botulinum toxin
+    route: in-office injections, every 12 weeks
+    benefit_type: medical
+    indications: [chronic migraine prevention (15+ headache days/month)]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+# ---------------------------------------------------------------------------
+# Branded acute treatments
+# ---------------------------------------------------------------------------
+acute_branded:
+  - generic: ubrogepant
+    brand: Ubrelvy
+    manufacturer: AbbVie
+    class: oral gepant
+    route: oral
+    benefit_type: pharmacy
+    indications: [acute migraine]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: zavegepant
+    brand: Zavzpret
+    manufacturer: Pfizer
+    class: intranasal gepant
+    route: nasal spray
+    benefit_type: pharmacy
+    indications: [acute migraine]
+    programs:
+      dtc: "PfizerForAll — listed; verify current terms"
+      copay_card: null
+      pap: null
+      bridge: null
+
+  - generic: lasmiditan
+    brand: Reyvow
+    manufacturer: Eli Lilly
+    class: ditan (5-HT1F agonist)
+    route: oral
+    benefit_type: pharmacy
+    indications: [acute migraine]
+    controlled_substance: "Schedule V"
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+  - generic: dihydroergotamine
+    brand: Trudhesa
+    manufacturer: Impel (Satsuma)
+    class: ergot, intranasal
+    route: nasal spray
+    benefit_type: pharmacy
+    indications: [acute migraine]
+    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+
+# ---------------------------------------------------------------------------
+# Generic preventives — the usual step-therapy rungs.
+# Payers typically require trial and failure of 2+ from 2+ classes, each for
+# roughly 6-8 weeks at a therapeutic dose, before a CGRP agent. Exact rules
+# come from each payer's policy, not from this file.
+# ---------------------------------------------------------------------------
+preventive_generic:
+  - {generic: topiramate, class: anticonvulsant, common_brand: Topamax}
+  - {generic: divalproex sodium, class: anticonvulsant, common_brand: Depakote}
+  - {generic: propranolol, class: beta blocker, common_brand: Inderal}
+  - {generic: timolol, class: beta blocker, common_brand: null}
+  - {generic: metoprolol, class: beta blocker, common_brand: Lopressor}
+  - {generic: amitriptyline, class: tricyclic antidepressant, common_brand: Elavil}
+  - {generic: nortriptyline, class: tricyclic antidepressant, common_brand: Pamelor}
+  - {generic: venlafaxine, class: SNRI, common_brand: Effexor}
+  - {generic: candesartan, class: ARB, common_brand: Atacand, note: "off-label; accepted by some payers"}
+  - {generic: verapamil, class: calcium channel blocker, common_brand: Calan, note: "weak evidence; some payers accept"}
+
+# ---------------------------------------------------------------------------
+# Generic triptans — the acute-treatment rungs before gepants/ditans.
+# ---------------------------------------------------------------------------
+acute_generic:
+  - {generic: sumatriptan, forms: [oral, nasal, injection], common_brand: Imitrex}
+  - {generic: rizatriptan, forms: [oral, ODT], common_brand: Maxalt}
+  - {generic: zolmitriptan, forms: [oral, ODT, nasal], common_brand: Zomig}
+  - {generic: eletriptan, forms: [oral], common_brand: Relpax}
+  - {generic: naratriptan, forms: [oral], common_brand: Amerge}
+  - {generic: almotriptan, forms: [oral], common_brand: Axert}
+  - {generic: frovatriptan, forms: [oral], common_brand: Frova}
+  - {generic: sumatriptan/naproxen, forms: [oral], common_brand: Treximet}
