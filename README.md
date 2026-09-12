@@ -11,7 +11,7 @@ Trailhead Rx is also a learning project. It is built to exercise three ideas in 
 
 ## Status
 
-Session one: repo scaffold, migraine drug list, ring-one policy manifest. Nothing runs yet.
+Session one: repo scaffold, migraine drug list, ring-one policy manifest with 30+ located documents (URLs, policy numbers, dates, step-therapy summaries). Nothing runs yet.
 
 ## Layout
 

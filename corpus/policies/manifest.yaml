@@ -1,225 +1,524 @@
 _meta:
   description: >
     Ring-one policy corpus for migraine. One entry per governing document.
-    The documents themselves are downloaded to this folder by hand and are
-    NOT committed (public repo, payer terms of use). Fill in url, version,
-    effective_date, and downloaded_on as each document is located.
+    Documents are downloaded by hand into this folder and are NOT committed
+    (public repo, payer terms of use). URLs and dates below were located on
+    2026-09-12; verify each when downloading and fill in `file` and
+    `downloaded_on`. `st_note` is a working summary of the step therapy rule
+    as read from the document or its landing page; the app cites the
+    document, never this note.
   ring: 1
   category: migraine
   state: OH
+  located_on: "2026-09-12"
 
 # Field guide
 #   payer            Plan or PBM whose criteria govern
-#   line_of_business commercial | medicaid_mco | medicare_advantage | marketplace | medicaid_ffs
-#   benefit_type     pharmacy | medical
-#   scope            which drugs/classes this document covers
-#   file             local filename once downloaded (kept out of git)
-#   url, version, effective_date, downloaded_on  — fill in
+#   line_of_business commercial | medicaid_mco | medicare_advantage | medicaid_ffs | reference
+#   benefit_type     pharmacy | medical | n/a
+#   scope            drugs/classes covered
+#   title, policy_id, url, effective_or_reviewed  — from the document
+#   st_note          working summary of the step therapy / criteria (not authoritative)
+#   file, downloaded_on  — fill in when downloaded
+#   status           found | landing_only | not_public
 
 documents:
 
-  # ----- Commercial / PBM criteria (pharmacy benefit; most CGRP agents) -----
-  - payer: Anthem / Elevance (Ohio)
+  # =========================================================================
+  # Commercial — pharmacy benefit (CGRP mAbs and gepants)
+  # =========================================================================
+
+  - payer: UnitedHealthcare / Optum Rx
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists (mAbs and gepants) — prior authorization / step therapy criteria
+    scope: Aimovig, Ajovy, Emgality — PA / medical necessity
+    title: Program Prior Authorization/Medical Necessity — CGRP Receptor Antagonists
+    policy_id: null
+    url: https://www.uhcprovider.com/content/dam/provider/docs/public/prior-auth/drugs-pharmacy/commercial/a-g/PA-Med-Nec-CGRP-Receptor-Antagonists.pdf
+    effective_or_reviewed: "2026-07-01 (reviewed 2026-04)"
+    st_note: Failure (>=2-month trial), contraindication, or intolerance to TWO of — beta-blockers, candesartan, divalproex, Botox, SNRIs, topiramate, TCAs. Annual reauth requires positive response.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: Anthem / Elevance (Ohio)
-    line_of_business: commercial
-    benefit_type: medical
-    scope: Vyepti (eptinezumab) and Botox for chronic migraine — clinical UM guideline
-    file: null
-    url: null
-    version: null
-    effective_date: null
-    downloaded_on: null
-
-  - payer: Aetna (CVS Health)
+  - payer: UnitedHealthcare / Optum Rx
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — clinical policy bulletin / formulary exception criteria
+    scope: Aimovig, Ajovy, Emgality — step therapy program
+    title: Program Step Therapy — CGRP Receptor Antagonists
+    policy_id: null
+    url: https://www.uhcprovider.com/content/dam/provider/docs/public/resources/pharmacy/step-therapy/Step-Therapy-CGRP-Receptor-Antagonists.pdf
+    effective_or_reviewed: "2026-04-01"
+    st_note: Same 2-of-7 preventive rule; Ajovy additionally requires 3-month failure of BOTH Aimovig and Emgality (or age <18).
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: Aetna (CVS Health)
-    line_of_business: commercial
-    benefit_type: medical
-    scope: Botox (chronic migraine) and Vyepti — clinical policy bulletin
-    file: null
-    url: null
-    version: null
-    effective_date: null
-    downloaded_on: null
-
-  - payer: UnitedHealthcare
+  - payer: UnitedHealthcare / Optum Rx
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — prior authorization / step therapy (Optum Rx)
+    scope: Nurtec ODT, Qulipta, Ubrelvy, Zavzpret
+    title: Program Prior Authorization/Medical Necessity — Migraine (Nurtec ODT, Qulipta, Ubrelvy, Zavzpret)
+    policy_id: null
+    url: https://www.uhcprovider.com/content/dam/provider/docs/public/prior-auth/drugs-pharmacy/commercial/h-p/PA-Med-Nec-Migraine-Nurtec-Qulipta-Ubrelvy-Zavzpret.pdf
+    effective_or_reviewed: "2026-06-01"
+    st_note: Acute — failure of two triptans (>=30-day trial each). Preventive — >=4 migraine days/month plus failure of two of beta-blockers/candesartan/divalproex/SNRIs/topiramate/TCAs (>=2 months).
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: UnitedHealthcare
-    line_of_business: commercial
-    benefit_type: medical
-    scope: Vyepti and Botox — medical benefit drug policy
-    file: null
-    url: null
-    version: null
-    effective_date: null
-    downloaded_on: null
-
-  - payer: Cigna (Express Scripts)
+  - payer: Aetna (CVS Caremark criteria)
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — coverage policy
+    scope: Aimovig, Ajovy, Emgality, Vyepti — injectable/IV CGRP
+    title: CGRP Receptor Antagonists Inj, IV — ST with Limit, Post PA
+    policy_id: "2761-E, 3155-E (UDR 06-2024)"
+    url: https://www.aetna.com/products/rxnonmedicare/data/2023/CGRP_Receptor_Antagonists_Inj,_IV_ST_with_Limit,_Post_PA_Policy_2761-E,_3155-E_UDR_06-2023.html
+    effective_or_reviewed: "06-2023 version fetched; 06-2024 URL returned 404 — look for newer on the Pharmacy CPB index"
+    st_note: 8-week trial of at least ONE class (AED, beta-blocker, or antidepressant) unless intolerance/contraindication. Notably lighter than UHC.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
+    downloaded_on: null
+    alt_url: https://www.aetna.com/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins.html
+
+  - payer: Aetna (CVS Caremark criteria)
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: Nurtec ODT, Qulipta, Ubrelvy, Zavzpret — oral/nasal CGRP
+    title: CGRP Receptor Antagonists Oral, Nasal — ST with Limit, Post PA
+    policy_id: "3481-E (UDR 06-2024)"
+    url: https://www.aetna.com/products/rxnonmedicare/data/2025%20commercial/CGRP_Receptor_Antagonists_Oral,_Nasal_ST_with_Limit,_Post_PA_Policy_3481-E_UDR_06-2024.html
+    effective_or_reviewed: "UDR 06-2024"
+    st_note: Prevention (Nurtec/Qulipta) — >=56-day supply of one standard preventive in past 730 days. Acute (Nurtec/Ubrelvy/Zavzpret) — inadequate response/intolerance to TWO triptans or contraindication.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Cigna / Express Scripts
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP inhibitors (preventive) — employer group plans
+    title: Drug and Biologic Coverage Policy IP0050 — CGRP Inhibitors (Preventive), Employer Group
+    policy_id: IP0050
+    url: https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ip_0050_coveragepositioncriteria_cgrp_inhibitors_preventative_employer.pdf
+    effective_or_reviewed: "2021-11-01 as shown; check for newer"
+    st_note: Age >=18, >=4 migraine days/month; inadequate response to >=3-month trials of TWO preventives from different classes (AED, antidepressant, beta-blocker, Botox) or contraindication; Vyepti also requires a triptan trial.
+    status: found
+    file: null
+    downloaded_on: null
+    related_urls:
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ph_2020_coveragepositioncriteria_cgrp_inhbitors_preventative_IFP.pdf   # Individual/Family plan version
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ip_0377_coveragepositioncriteria_atogepant.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ip_0505_coveragepositioncriteria_galcanezumab.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ip_0147_coveragepositioncriteria_rimegepant.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/pharmacy/ip_0506_coveragepositioncriteria_eptinezumab.pdf
+
+  - payer: Medical Mutual of Ohio
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: Aimovig, Ajovy, Emgality
+    title: Calcitonin Gene-Related Peptide (CGRP) Antagonist
+    policy_id: "201815"
+    url: https://www.medmutual.com/-/media/MedMutual/Files/Providers/Prior-Auth-Rx/Calcitonin-GeneRelated-Peptide-CGRP-Antagonist.pdf
+    effective_or_reviewed: "eff. 2018-06-17; revised 2025-09-18"
+    st_note: Trial of >=2 standard preventives from different classes (beta-blocker, anticonvulsant, TCA, ACE inhibitor, Botox) with inadequate efficacy/intolerance; initial 3 months, renewal 1 year; lifestyle counseling documented.
+    status: found
+    file: null
     downloaded_on: null
 
   - payer: Medical Mutual of Ohio
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — prior authorization criteria
+    scope: Nurtec ODT
+    title: Nurtec ODT (rimegepant)
+    policy_id: null
+    url: https://www.medmutual.com/-/media/MedMutual/Files/Providers/Prior-Auth-Rx/Nurtec-ODT.pdf
+    effective_or_reviewed: "revised 2025-09-18"
+    st_note: Acute — >=1 triptan tried or contraindicated. Preventive — 4-14 migraine days/month plus 2 preventives from different classes failed.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  # ----- PBM-level criteria (govern many employer plans regardless of carrier) -----
+  - payer: Medical Mutual of Ohio
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: Qulipta
+    title: Qulipta (atogepant)
+    policy_id: null
+    url: https://www.medmutual.com/-/media/MedMutual/Files/Providers/Prior-Auth-Rx/Qulipta.pdf
+    effective_or_reviewed: null
+    st_note: Not yet read.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Anthem / Elevance (Ohio) — CarelonRx
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP mAbs and gepants — pharmacy PA criteria
+    title: null
+    policy_id: null
+    url: https://www.anthem.com/pharmacy-information/for-providers/clinical-criteria
+    effective_or_reviewed: null
+    st_note: Pharmacy-benefit CGRP criteria for Anthem commercial are administered by CarelonRx and do not appear to be posted publicly. Contact druglist@carelon.com. App must abstain for this pair until a document is obtained.
+    status: not_public
+    file: null
+    downloaded_on: null
+
+  # =========================================================================
+  # PBM standard criteria (govern many employer plans regardless of carrier)
+  # =========================================================================
+
+  - payer: Express Scripts (Cigna-hosted "cnf" standard series)
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: Aimovig (companion policies for Ajovy, Emgality, Nurtec, Qulipta)
+    title: Migraine — CGRP Inhibitors — Aimovig Prior Authorization Policy
+    policy_id: cnf_331
+    url: https://static.cigna.com/assets/chcp/pdf/coveragePolicies/cnf/cnf_331_coveragepositioncriteria_calcitonin_gene-related_peptide_inhibitors_aimovig_pa.pdf
+    effective_or_reviewed: "reviewed 2026-04-22"
+    st_note: NO step therapy — age >=18 and >=4 migraine days/month. The two-preventive requirement was removed 2024-04-10. Important contrast with UHC and Cigna IP0050.
+    status: found
+    file: null
+    downloaded_on: null
+    related_urls:
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/cnf/cnf_332_coveragepositioncriteria_calcitonin_gene-related_peptide_inhibitors_ajovy_pa.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/cnf/cnf_333_coveragepositioncriteria_calcitonin_gene-related_peptide_inhibitors_emgality_pa.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/cnf/cnf_469_coveragepositioncriteria_migraine_nurtec_odt_pa.pdf
+      - https://static.cigna.com/assets/chcp/pdf/coveragePolicies/cnf/cnf_708_coveragepositioncriteria_migraine_qulipta_pa.pdf
+
   - payer: Express Scripts
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — standard PA/step criteria
+    scope: National Preferred Formulary exclusions (Vyepti, Zavzpret excluded)
+    title: 2026 National Preferred Formulary Exclusions
+    policy_id: null
+    url: https://www.express-scripts.com/pdf/formulary/NPF_Preferred_Formulary_Exclusions2026.pdf
+    effective_or_reviewed: "2026-07-01"
+    st_note: Vyepti excluded (alternatives Aimovig/Ajovy/Emgality); Zavzpret excluded (alternatives triptans/Nurtec/Ubrelvy). Formulary exclusion is a different barrier from PA — the app must present it as such.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: CVS Caremark
+  - payer: CVS Caremark (standard criteria; also used by Aetna)
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — standard PA/step criteria
+    scope: Injectable/IV CGRP
+    title: CGRP Receptor Antagonists Inj/IV ST with Limit, Post PA (client-hosted copy)
+    policy_id: "2761-E / 3155-E (UDR 06-2024)"
+    url: https://www.nhpri.org/blobnhpri08e0944faa/wp-content/uploads/2024/12/CGRP-Receptor-Antagonists-Inj-IV-ST-with-Limit-Post-PA-Policy-2761-E-3155-E-UDR-06-2024.pdf
+    effective_or_reviewed: "UDR 06-2024"
+    st_note: ST — >=56-day supply of an AED/beta-blocker/antidepressant in past 730 days. PA — 8-week trial failure or intolerance. Hosted by a Caremark client (NHPRI); treat as representative of Caremark standard.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
+    related_urls:
+      - https://www.shpnc.gov/documents/files/cgrp-receptor-antagonists-oral-st-limit-post-pa/open   # oral/nasal, NC State Health Plan copy
+      - https://info.caremark.com/content/dam/enterprise/caremark/microsites/dig/pdfs/pa_forms_default/C20879-C_CGRP-OK.pdf   # a client variant with NO step therapy
 
-  - payer: Optum Rx
+  - payer: Optum Rx (standalone PBM criteria)
     line_of_business: commercial
     benefit_type: pharmacy
-    scope: CGRP antagonists — standard PA/step criteria
+    scope: CGRP
+    title: null
+    policy_id: null
+    url: https://professionals.optumrx.com/prior-authorization.html
+    effective_or_reviewed: null
+    st_note: No standalone public criteria. Use the UHC commercial program PDFs above as the proxy (same clinical program authorship) and label the match as proxy in the app.
+    status: landing_only
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  # ----- Ohio Medicaid (FFS unified PDL governs the MCOs' pharmacy benefit) -----
-  - payer: Ohio Department of Medicaid — Unified Preferred Drug List
+  # =========================================================================
+  # Commercial — medical benefit (Vyepti IV, Botox)
+  # =========================================================================
+
+  - payer: Anthem / Elevance — CarelonRx Medical Drug Clinical Criteria
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Botox — chronic migraine
+    title: Medical Drug Clinical Criteria — Botulinum Toxin
+    policy_id: CC-0032
+    url: https://www.carelonrx.com/ms/pharmacyinformation/Botulinum-Toxin.pdf
+    effective_or_reviewed: "published 2026-01-30; reviewed 2025-12-08"
+    st_note: Chronic migraine >=15 headache days/month for >3 months with >=8 migraine days; initial 6 months; renewal requires reduced migraine days. Additional requirements if combined with CGRP agents. Read full text for preventive-trial requirement (older version required 2 agents from different classes x 2 months).
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Anthem / Elevance — CarelonRx Medical Drug Clinical Criteria
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Vyepti
+    title: Medical Drug Clinical Criteria — Vyepti (eptinezumab-jjmr)
+    policy_id: CC-0160
+    url: https://www.carelonrx.com/ms/pharmacyinformation/Vyepti.pdf
+    effective_or_reviewed: "published 2025-12-01; reviewed 2025-05-16"
+    st_note: Non-preferred CGRP — requires trial/inadequate response to one preferred CGRP agent; 6-month approval. Older 2024 version required 2 preventive classes x 2 months.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Aetna
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Vyepti
+    title: Clinical Policy Bulletin 0970 — Eptinezumab-jjmr (Vyepti)
+    policy_id: CPB 0970
+    url: https://www.aetna.com/cpb/medical/data/900_999/0970.html
+    effective_or_reviewed: "reviewed 2025-12-09"
+    st_note: No preventive step therapy — initial approval if member has not yet had 3 months of Vyepti; continuation requires reduction in migraine days from baseline.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Aetna
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Botox — chronic migraine
+    title: Clinical Policy Bulletin 0113 — Botulinum Toxin
+    policy_id: CPB 0113
+    url: https://www.aetna.com/cpb/medical/data/100_199/0113.html
+    effective_or_reviewed: "reviewed 2026-07-14"
+    st_note: Chronic migraine >=15 headache days/month, >=8 lasting >=4 h; age >=18; trials of 2 preventives from >=2 classes (antidepressants, AEDs, beta-blockers, CGRP therapies), >=60 days each.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: UnitedHealthcare
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Vyepti
+    title: Vyepti — Commercial & Individual Exchange Medical Benefit Drug Policy
+    policy_id: 2026D0090N
+    url: https://www.uhcprovider.com/content/dam/provider/docs/public/policies/comm-medical-drug/vyepti.pdf
+    effective_or_reviewed: "2026-09-01"
+    st_note: Failure of two of seven standard preventives (>=2 months) AND failure of two of Aimovig/Emgality/Nurtec/Qulipta. One of the steepest ladders in the corpus.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: UnitedHealthcare
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Botox — chronic migraine
+    title: Botulinum Toxins A and B — Commercial Medical Benefit Drug Policy
+    policy_id: 2026D0017AN
+    url: https://www.uhcprovider.com/content/dam/provider/docs/public/policies/comm-medical-drug/botulinum-toxins-a-and-b.pdf
+    effective_or_reviewed: "2026-01-01"
+    st_note: Chronic migraine >=15 headache days/month, >=8 migraine days, >=4 h. Read full text for preventive-trial requirement.
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Medical Mutual of Ohio
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Botox — chronic migraine
+    title: Botox (onabotulinumtoxinA)
+    policy_id: "082201"
+    url: https://www.medmutual.com/-/media/MedMutual/Files/Providers/Prior-Auth-Rx/Botox-onabotulinumtoxinA.pdf
+    effective_or_reviewed: "eff. 2022-08-30; revised 2025-12-18"
+    st_note: ">=15 headache days/month >3 months with >=8 migraine days; baseline HIT-6/MIDAS; current use of a preventive intervention; other causes excluded."
+    status: found
+    file: null
+    downloaded_on: null
+
+  # =========================================================================
+  # Ohio Medicaid — pharmacy benefit is carved out to the single PBM (Gainwell);
+  # the Unified PDL governs all MCOs. Physician-administered drugs stay with each MCO.
+  # =========================================================================
+
+  - payer: Ohio Department of Medicaid — Unified Preferred Drug List (Gainwell SPBM)
     line_of_business: medicaid_ffs
     benefit_type: pharmacy
-    scope: Migraine agents (CGRP, triptans, preventives) — PDL status and PA criteria
+    scope: Anti-migraine agents — acute and prophylaxis
+    title: Ohio Medicaid Pharmacy Benefit Management Program — Unified Preferred Drug List
+    policy_id: null
+    url: https://dam.assets.ohio.gov/image/upload/medicaid.ohio.gov/PHM/unified-pdl/20260401_UPDL_FINAL.pdf
+    effective_or_reviewed: "2026-04-01"
+    st_note: Acute — preferred with ST — Nurtec ODT, Ubrelvy; non-preferred — Zavzpret; ST = inadequate response of >=14 days with >=2 preferred drugs in category. Prophylaxis — preferred with ST — Aimovig, Ajovy, Emgality 120 mg; non-preferred — Nurtec ODT, Qulipta; ST = inadequate response of >=30 days with >=2 preferred controller migraine drugs. Governs ALL Ohio Medicaid MCOs' pharmacy benefit.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
-    note: Ohio's single PBM (Gainwell) administers pharmacy for all Medicaid MCOs; the UPDL is the governing document.
+    related_urls:
+      - https://dam.assets.ohio.gov/image/upload/medicaid.ohio.gov/PHM/unified-pdl/20251001_UPDL_v1_approved.pdf   # prior version
+      - https://dam.assets.ohio.gov/image/upload/medicaid.ohio.gov/PHM/drug-coverage/20240401_UPDL_Criteria_v6_approved.final.pdf   # criteria companion (older)
+      - https://spbm.medicaid.ohio.gov/SPContent/DocumentLibrary/UPDL
+      - https://pharmacy.medicaid.ohio.gov/prior-authorization
 
   - payer: CareSource (Ohio Medicaid)
     line_of_business: medicaid_mco
     benefit_type: medical
-    scope: Botox and Vyepti — medical benefit policy
+    scope: Botox — chronic migraine
+    title: Botox (onabotulinumtoxinA) Pharmacy Policy Statement
+    policy_id: OH-MED-P-366685
+    url: https://www.caresource.com/documents/medicaid-oh-policy-pharmacy-botox-20250401.pdf
+    effective_or_reviewed: "2025-04-01"
+    st_note: ">=15 headache days and >=8 migraine days per month for >=3 months; tried/failed >=1 preventive (beta-blocker, CCB, antidepressant, anticonvulsant, candesartan) for 8 weeks. (2024 version required 2 agents x 2 months.)"
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: Molina Healthcare of Ohio
+  - payer: CareSource (Ohio Medicaid)
     line_of_business: medicaid_mco
     benefit_type: medical
-    scope: Botox and Vyepti — medical benefit policy
+    scope: Vyepti
+    title: Vyepti Pharmacy Policy Statement
+    policy_id: null
+    url: https://www.caresource.com/documents/medicaid-oh-policy-pharmacy-vyepti-20241001.pdf
+    effective_or_reviewed: "2024-10-01"
+    st_note: ">=1 preventive x 8 weeks AND trial/failure of a preferred CGRP; no combination with Botox/other CGRP; 6-month initial."
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
+    alt_url: https://www.caresource.com/oh/providers/tools-resources/health-partner-policies/pharmacy-policies/medicaid/
 
-  - payer: Buckeye Health Plan (Centene)
+  - payer: Molina Healthcare of Ohio (Medicaid)
     line_of_business: medicaid_mco
     benefit_type: medical
-    scope: Botox and Vyepti — medical benefit policy
+    scope: Botox — chronic migraine
+    title: Botulinum Toxin — Drug and Biologic Coverage Criteria
+    policy_id: C8755-A
+    url: https://www.molinahealthcare.com/providers/oh/medicaid/policies/-/media/Molina/PublicWebsite/PDF/Providers/oh/medicaid/policies/Botulinum-Toxin-C8755-A-1223-2.pdf
+    effective_or_reviewed: "2022-12-08"
+    st_note: ">=15 headache days/month for >=3 months, >=4 h; failure of THREE classes (beta-blocker, AED, antidepressant, antihypertensive), 2 months each; no combination with CGRP. Steepest Botox ladder in the corpus."
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: AmeriHealth Caritas Ohio
+  - payer: Molina Healthcare of Ohio (Medicaid)
     line_of_business: medicaid_mco
     benefit_type: medical
-    scope: Botox and Vyepti — medical benefit policy
+    scope: Vyepti
+    title: Vyepti — Drug and Biologic Coverage Criteria
+    policy_id: "MOH#002"
+    url: https://www.molinahealthcare.com/providers/oh/medicaid/policies/-/media/Molina/PublicWebsite/PDF/Providers/oh/medicaid/policies/Vyepti-eptinezumab-MOH002-0125.pdf
+    effective_or_reviewed: "P&T 2024-04-24"
+    st_note: Three classes failed (2 months each) plus, for chronic migraine, a 3-month failure of a preferred CGRP; neurologist prescriber.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  # ----- Medicare Advantage / Part D -----
-  - payer: Humana (Medicare Advantage / Part D, Ohio)
+  - payer: Buckeye Health Plan (Centene, Ohio Medicaid)
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox — chronic migraine
+    title: Clinical Policy — OnabotulinumtoxinA (Botox)
+    policy_id: CP.PHAR.232
+    url: https://www.buckeyehealthplan.com/content/dam/centene/Buckeye/WebsitePDFs/Pharmacy/pharm-policies-from-karen-tiffany-that-go-in-next-gen-website-page/CP.PHAR.232%20OnabotulinumtoxinA%20(Botox)%2008.25.23_final.pdf
+    effective_or_reviewed: "last review 2023-11"
+    st_note: ">=15 headache days/month >=3 months, >=4 h; failure of 2 oral preventives from different classes (AED, beta-blocker, antidepressant), 8 weeks each."
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: Buckeye Health Plan (Centene, Ohio Medicaid)
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Vyepti
+    title: Clinical Policy — Eptinezumab-jjmr (Vyepti)
+    policy_id: CP.PHAR.489
+    url: https://www.buckeyehealthplan.com/content/dam/centene/Buckeye/WebsitePDFs/Pharmacy/pharm-policies-from-karen-tiffany-that-go-in-next-gen-website-page/CP.PHAR.489%20Eptinezumab%20(Vyepti)_07.10.23_final.pdf
+    effective_or_reviewed: "eff. 2020-09-01; last review 2023-11"
+    st_note: ">=4 migraine days/month for >=3 months; neurologist/headache specialist; 2 oral preventives (8 weeks each, different classes) AND failure of Aimovig; max 100 mg every 3 months."
+    status: found
+    file: null
+    downloaded_on: null
+
+  - payer: AmeriHealth Caritas Ohio (Medicaid)
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox / Vyepti
+    title: null
+    policy_id: null
+    url: https://www.amerihealthcaritasoh.com/provider/resources/pharmacy-prior-auth
+    effective_or_reviewed: null
+    st_note: No migraine-specific policy surfaced. Physician-administered drugs are PA'd by the plan via PerformRx. Browse the clinical policies directory (policies-20260113) or request criteria. App abstains until obtained.
+    status: landing_only
+    file: null
+    downloaded_on: null
+
+  # =========================================================================
+  # Medicare Advantage / Part D / Part B
+  # =========================================================================
+
+  - payer: Humana (Medicare Advantage)
+    line_of_business: medicare_advantage
+    benefit_type: medical
+    scope: Part B step therapy list — Vyepti nonpreferred
+    title: Medicare Part B Step Therapy Requirement — MA plans
+    policy_id: null
+    url: https://assets.humana.com/is/content/humana/26_cphppartbstpdlistmpdf
+    effective_or_reviewed: "2026-01-01"
+    st_note: Vyepti (J3032) listed as Nonpreferred under CGRPs (MAPD plans only) — step through preferred CGRPs. Botox not listed.
+    status: found
+    file: null
+    downloaded_on: null
+    related_urls:
+      - https://assets.humana.com/is/content/humana/2026%20Medicare%20Prior%20Authorization%20Listpdf
+
+  - payer: Humana (Part D)
     line_of_business: medicare_advantage
     benefit_type: pharmacy
-    scope: CGRP antagonists — Part D PA/step criteria
+    scope: CGRP — Part D PA criteria
+    title: null
+    policy_id: null
+    url: https://www.humana.com/pharmacy/medicare-drug-list
+    effective_or_reviewed: null
+    st_note: No public drug-specific Part D criteria PDF. Criteria surface per-drug inside the drug list tool. Alternative — CMS Part D formulary files. App abstains until obtained.
+    status: landing_only
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
 
-  - payer: CMS / CGS (Part B MAC for Ohio)
+  - payer: CGS Administrators (J15 Part B MAC — Ohio)
     line_of_business: medicare_advantage
     benefit_type: medical
-    scope: Botulinum toxins LCD/billing article (chronic migraine)
+    scope: Botulinum toxins — chronic migraine (Original Medicare Part B; MA plans generally follow)
+    title: LCD L33949 — Botulinum Toxins
+    policy_id: L33949
+    url: https://www.cms.gov/medicare-coverage-database/view/lcd.aspx?lcdId=33949&ver=23
+    effective_or_reviewed: null
+    st_note: Coverage for chronic migraine >=15 headache days/month, >=4 h. See companion billing article and CGS fact sheet for documentation requirements.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
+    related_urls:
+      - https://www.cms.gov/medicare-coverage-database/view/article.aspx?articleid=56472&ver=20   # Article A56472 Billing and Coding, rev. 2025-02-06
+      - https://www.cgsmedicare.com/partb/mr/pdf/j0585.pdf   # CGS J0585 Botox fact sheet, rev. 2025-07-21
 
-  # ----- Ohio law and appeal references (not payer policy, but cited in layer one) -----
-  - payer: Ohio Revised Code — step therapy exception requirements
+  # =========================================================================
+  # Ohio law and appeal references (cited in layer one; not payer policy)
+  # =========================================================================
+
+  - payer: Ohio Revised Code
     line_of_business: reference
     benefit_type: n/a
-    scope: ORC 3901.83 et seq. (step therapy exceptions) — applies to state-regulated plans and Medicaid, not self-funded ERISA plans
+    scope: Step therapy exemption — state-regulated plans
+    title: ORC 3901.832 — Step therapy exemption
+    policy_id: "ORC 3901.832"
+    url: https://codes.ohio.gov/ohio-revised-code/section-3901.832
+    effective_or_reviewed: "eff. 2019-04-05"
+    st_note: Insurer must provide accessible exemption process and publish ST drug lists; decide urgent requests in 48 h, others in 10 calendar days (deemed granted if late); mandatory exemption when drug is contraindicated, patient previously tried/failed the required drug or an FDA-approved equivalent, or patient is stable on current drug; appeal to clinical peer, then external review under ORC Ch. 3922. Does NOT apply to self-funded ERISA plans.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
+    related_urls:
+      - https://codes.ohio.gov/ohio-revised-code/section-3901.83     # definitions (not yet verified)
+      - https://codes.ohio.gov/ohio-revised-code/section-5164.7514   # Medicaid analog (not yet verified)
 
-  - payer: Ohio Department of Insurance — external review process
+  - payer: Ohio Department of Insurance
     line_of_business: reference
     benefit_type: n/a
-    scope: Internal appeal and external review rights and timelines
+    scope: Internal appeal and external review — consumer process
+    title: Health Coverage and External Review Appeals Process
+    policy_id: null
+    url: https://insurance.ohio.gov/about-us/complaint-center/health-coverage-external-review-process
+    effective_or_reviewed: "External Review System via OH|ID since 2025-12-15"
+    st_note: Consumer toolkit (brochure, FAQ); hotline 800-686-1526; external.review@insurance.ohio.gov.
+    status: found
     file: null
-    url: null
-    version: null
-    effective_date: null
     downloaded_on: null
+    related_urls:
+      - https://insurance.ohio.gov/companies/product-regulation-and-actuarial-services/resources/health-external-review
+      - https://insurance.ohio.gov/Company/Pages/OhioInternalAppealandExternalReviewModelNotices.aspx
