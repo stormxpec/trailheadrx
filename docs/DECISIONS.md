@@ -25,3 +25,9 @@ Chosen over descriptive options (CoverageNav, InsuriNav) and other metaphors (Ru
 
 ## 2026-09-12 — Public repo, corpus stays out
 Repo is public for portfolio purposes. Payer documents carry terms of use, so only manifests (source URLs, versions, dates) are committed; documents are downloaded locally. Enforced by `.gitignore`.
+
+## 2026-09-12 — Architecture framed as three layers outside the LLM
+Ben's earlier "LLM stack" framing: (1) context engineering / memory / RAG, (2) model orchestration and agentic chains, (3) cognitive governance and guardrails. Trailhead Rx maps onto it as before / around / wrap: context engineering shapes the packet the model sees, orchestration sequences the calls, governance gates inputs and outputs and keeps the record. See docs/ARCHITECTURE.md. Rendered view: https://claude.ai/code/artifact/f06efd1a-47d8-4c2e-b9ac-0e18452c91af
+
+## 2026-09-12 — Architecture relabeled in industry vocabulary; FLUENCY.md added
+Ben's goal is fluency in how modern applications use LLMs: what happens inside the model versus before, around, and after it. The diagram now shows the model's five internal steps (tokenizer → embeddings → transformer blocks → logits → sampling) as the untouchable core, and labels every outside component with its industry term (ingestion, chunking, embeddings, vector store, hybrid retrieval, prompt assembly, routing, chain, fan-out, LLM-as-judge, input/output guardrails, rules-as-code, tracing, evals). docs/FLUENCY.md maps each term to our component and gives the "how to say it" sentences.
