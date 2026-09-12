@@ -38,8 +38,8 @@ documents:
     effective_or_reviewed: "2026-07-01 (reviewed 2026-04)"
     st_note: Failure (>=2-month trial), contraindication, or intolerance to TWO of — beta-blockers, candesartan, divalproex, Botox, SNRIs, topiramate, TCAs. Annual reauth requires positive response.
     status: found
-    file: null
-    downloaded_on: null
+    file: uhc-cgrp-pa-mednec.pdf
+    downloaded_on: "2026-09-12"
 
   - payer: UnitedHealthcare / Optum Rx
     line_of_business: commercial
@@ -51,8 +51,8 @@ documents:
     effective_or_reviewed: "2026-04-01"
     st_note: Same 2-of-7 preventive rule; Ajovy additionally requires 3-month failure of BOTH Aimovig and Emgality (or age <18).
     status: found
-    file: null
-    downloaded_on: null
+    file: uhc-cgrp-step-therapy.pdf
+    downloaded_on: "2026-09-12"
 
   - payer: UnitedHealthcare / Optum Rx
     line_of_business: commercial
@@ -123,8 +123,8 @@ documents:
     effective_or_reviewed: "eff. 2018-06-17; revised 2025-09-18"
     st_note: Trial of >=2 standard preventives from different classes (beta-blocker, anticonvulsant, TCA, ACE inhibitor, Botox) with inadequate efficacy/intolerance; initial 3 months, renewal 1 year; lifestyle counseling documented.
     status: found
-    file: null
-    downloaded_on: null
+    file: medmutual-cgrp-201815.pdf
+    downloaded_on: "2026-09-12"
 
   - payer: Medical Mutual of Ohio
     line_of_business: commercial
@@ -282,8 +282,8 @@ documents:
     effective_or_reviewed: "reviewed 2026-07-14"
     st_note: Chronic migraine >=15 headache days/month, >=8 lasting >=4 h; age >=18; trials of 2 preventives from >=2 classes (antidepressants, AEDs, beta-blockers, CGRP therapies), >=60 days each.
     status: found
-    file: null
-    downloaded_on: null
+    file: aetna-cpb-0113-botox.html
+    downloaded_on: "2026-09-12"
 
   - payer: UnitedHealthcare
     line_of_business: commercial
@@ -339,8 +339,8 @@ documents:
     effective_or_reviewed: "2026-04-01"
     st_note: Acute — preferred with ST — Nurtec ODT, Ubrelvy; non-preferred — Zavzpret; ST = inadequate response of >=14 days with >=2 preferred drugs in category. Prophylaxis — preferred with ST — Aimovig, Ajovy, Emgality 120 mg; non-preferred — Nurtec ODT, Qulipta; ST = inadequate response of >=30 days with >=2 preferred controller migraine drugs. Governs ALL Ohio Medicaid MCOs' pharmacy benefit.
     status: found
-    file: null
-    downloaded_on: null
+    file: ohio-medicaid-updl-20260401.pdf
+    downloaded_on: "2026-09-12"
     related_urls:
       - https://dam.assets.ohio.gov/image/upload/medicaid.ohio.gov/PHM/unified-pdl/20251001_UPDL_v1_approved.pdf   # prior version
       - https://dam.assets.ohio.gov/image/upload/medicaid.ohio.gov/PHM/drug-coverage/20240401_UPDL_Criteria_v6_approved.final.pdf   # criteria companion (older)
