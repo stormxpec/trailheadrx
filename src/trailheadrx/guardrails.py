@@ -136,6 +136,11 @@ def freshness_warnings(chunks) -> list[str]:
         if c.file in seen:
             continue
         seen.add(c.file)
+        # A statute's effective date is when it became law, not a review date;
+        # an old effective date is not staleness. Reference documents are
+        # checked for currency at download time (manifest downloaded_on).
+        if getattr(c, "line_of_business", "") == "reference":
+            continue
         d = _parse_date(c.effective_or_reviewed) or _parse_date(getattr(c, "downloaded_on", "") or "")
         if d is None:
             out.append(f"We could not read the date on one of your plan's documents ('{c.title}'); it is worth "

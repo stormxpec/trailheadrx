@@ -97,3 +97,12 @@ def test_appeal_questions_pull_in_reference_docs(indexed):
     # Medicare Advantage appeals run through CMS, so Ohio references stay out.
     ma = build_packet("How do I appeal a denial?", "UnitedHealthcare", "medicare_advantage", "Emgality", "")
     assert not any(c.line_of_business == "reference" for c in ma.chunks)
+
+
+def test_freshness_skips_statutes(indexed):
+    from trailheadrx.retrieve import build_packet
+    from trailheadrx.guardrails import freshness_warnings
+    pkt = build_packet("My plan denied Emgality. How do I appeal?", "UnitedHealthcare", "commercial", "Emgality", "")
+    assert any(c.line_of_business == "reference" for c in pkt.chunks)
+    assert not any("FIXTURE — External review" in w for w in freshness_warnings(pkt.chunks))
+
