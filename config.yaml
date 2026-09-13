@@ -8,7 +8,10 @@ models:
   strong: claude-sonnet-5
   # Local embedding model for retrieval (runs on the laptop; no API key).
   embedding: sentence-transformers/all-MiniLM-L6-v2
-  max_output_tokens: 4000
+  # Output budget per call. Must cover the model's internal reasoning AND the
+  # answer; a cut-off answer arrives as broken JSON. Well above what a full
+  # answer needs (~2-3k tokens).
+  max_output_tokens: 16000
 
 paths:
   policies_manifest: corpus/policies/manifest.yaml

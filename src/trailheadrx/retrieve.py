@@ -223,7 +223,7 @@ def hybrid_retrieve(question: str, pm: PlanMatch, conn: sqlite3.Connection | Non
     ).fetchall()
     semantic_rank: dict[int, int] = {}
     if emb_rows:
-        mat = np.stack([np.frombuffer(r["vector"], dtype=np.float32) for r in emb_rows])
+        mat = np.nan_to_num(np.stack([np.frombuffer(r["vector"], dtype=np.float32) for r in emb_rows]))
         qv = embed([f"{pm.drug}: {question}"])[0]
         sims = mat @ qv
         order = np.argsort(-sims)[:n_cand]

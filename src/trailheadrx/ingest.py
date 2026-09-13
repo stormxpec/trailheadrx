@@ -274,7 +274,7 @@ def ingest(rebuild: bool = False, documents: list[dict] | None = None) -> dict:
             continue
 
         pages = parse(fpath)
-        chunks = chunk(pages)
+        chunks = [c for c in chunk(pages) if len(c.text.split()) >= 5]   # near-empty chunks embed to NaN
         cur = conn.execute(
             "INSERT INTO documents (payer,line_of_business,benefit_type,scope,title,policy_id,url,"
             "effective_or_reviewed,file,downloaded_on,status) VALUES (?,?,?,?,?,?,?,?,?,?,?)",

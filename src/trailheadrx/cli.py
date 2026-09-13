@@ -29,6 +29,7 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--drug", required=True, help='e.g. "Emgality"')
     s.add_argument("--self-funded", choices=["yes", "no"], help="is the employer plan self-funded (if known)")
     s.add_argument("--no-judge", action="store_true", help="skip the LLM-as-judge step")
+    s.add_argument("--compare-class", action="store_true", help="also show how the plan treats the other medicines in the same class")
     s.add_argument("--json", action="store_true", help="print the full answer as JSON")
 
     sub.add_parser("status", help="index summary and mode")
@@ -57,6 +58,13 @@ def main(argv: list[str] | None = None) -> int:
         sf = None if a.self_funded is None else (a.self_funded == "yes")
         ans = answer(a.question, a.payer, a.lob, a.drug, self_funded=sf, use_judge=not a.no_judge)
         print(json.dumps(asdict(ans), indent=2) if a.json else ans.render())
+        if a.compare_class:
+            from .compare import compare_class, render_table
+            name, rows, calls = compare_class(a.drug, a.payer, a.lob)
+            if rows:
+                print("\n" + render_table(a.drug, name, rows))
+                cost = sum(__import__("trailheadrx.llm", fromlist=["estimate_cost_usd"]).estimate_cost_usd(c.model, c.input_tokens, c.output_tokens) for c in calls)
+                print(f"\n  ({len(calls)} extraction calls, est. ${cost:.3f})")
         return 0
     return 1
 

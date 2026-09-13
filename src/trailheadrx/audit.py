@@ -43,7 +43,7 @@ class Trace:
             "purpose": purpose, "model": res.model, "input_tokens": res.input_tokens,
             "output_tokens": res.output_tokens, "latency_ms": res.latency_ms,
             "cost_usd": estimate_cost_usd(res.model, res.input_tokens, res.output_tokens),
-            "dry_run": res.dry_run,
+            "dry_run": res.dry_run, "stop_reason": getattr(res, "stop_reason", "end_turn"),
         })
 
     def finish(self, outcome: str, **data) -> dict:

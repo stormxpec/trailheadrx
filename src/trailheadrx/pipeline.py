@@ -162,6 +162,12 @@ def answer(question: str, payer: str, line_of_business: str, drug: str, self_fun
     for attempt in range(1, config.CONFIG["thresholds"]["max_revisions"] + 2):
         parsed, dres, _ = draft(packet, qtype, notes or None)
         trace.call(f"draft_{attempt}", dres)
+        if getattr(dres, "stop_reason", "") == "max_tokens":
+            # Cut off by the output budget: no point verifying; say so in the trace and retry shorter.
+            trace.stage(f"verify_{attempt}", passed=False, notes=["The draft was cut off by the output token limit (stop_reason=max_tokens)."], per_claim=[])
+            notes = ["Your previous reply was cut off because it was too long. Reply with at most 10 short claims."]
+            verdict = None
+            continue
         verdict = verify(parsed, packet, use_judge=use_judge)
         if verdict.judge:
             trace.call(f"judge_{attempt}", verdict.judge)

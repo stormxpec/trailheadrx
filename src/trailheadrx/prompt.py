@@ -91,7 +91,7 @@ def build_system_prompt() -> str:
         "\n\nOutput format: reply with a single JSON object matching this schema and nothing else:\n"
         + json.dumps(ANSWER_SCHEMA, indent=1)
         + "\n\nEach item in `claims` is ONE statement with the passage numbers that support it. "
-          "Prefer several short claims over one long one. Put anything the passages do not cover in "
+          "Prefer several short claims over one long one, and no more than 12 claims in total. Put anything the passages do not cover in "
           "`not_in_documents` instead of guessing.\n\n"
           "Writing style (this matters as much as accuracy): write like a helpful friend who happens to know "
           "insurance, not like the policy. Say 'your health plan', never 'the plan' or 'the policy'. Say a medicine "

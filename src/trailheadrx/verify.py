@@ -104,7 +104,7 @@ def llm_judge(answer: dict, packet: ContextPacket) -> tuple[list[dict], llm.LLMR
         items.append(f"CLAIM {i}: {claim.get('text', '')}\nCITED PASSAGES:\n{passages}")
     user = "\n\n=====\n\n".join(items)
     stub = json.dumps([{"claim": i + 1, "verdict": "SUPPORTED", "reason": "dry-run"} for i in range(len(items))])
-    res = llm.complete("small", JUDGE_SYSTEM, user, max_tokens=1500, dry_run_stub=stub)
+    res = llm.complete("small", JUDGE_SYSTEM, user, max_tokens=4000, dry_run_stub=stub)
     parsed = None
     try:
         m = re.search(r"\[.*\]", res.text, flags=re.DOTALL)

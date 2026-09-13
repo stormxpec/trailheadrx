@@ -64,8 +64,8 @@ documents:
     effective_or_reviewed: "2026-06-01"
     st_note: Acute — failure of two triptans (>=30-day trial each). Preventive — >=4 migraine days/month plus failure of two of beta-blockers/candesartan/divalproex/SNRIs/topiramate/TCAs (>=2 months).
     status: found
-    file: null
-    downloaded_on: null
+    file: uhc-migraine-gepants-pa.pdf
+    downloaded_on: "2026-09-13"
 
   - payer: Aetna (CVS Caremark criteria)
     line_of_business: commercial
@@ -295,8 +295,8 @@ documents:
     effective_or_reviewed: "2026-09-01"
     st_note: Failure of two of seven standard preventives (>=2 months) AND failure of two of Aimovig/Emgality/Nurtec/Qulipta. One of the steepest ladders in the corpus.
     status: found
-    file: null
-    downloaded_on: null
+    file: uhc-vyepti-medical.pdf
+    downloaded_on: "2026-09-13"
 
   - payer: UnitedHealthcare
     line_of_business: commercial

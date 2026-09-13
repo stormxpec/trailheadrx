@@ -27,6 +27,7 @@ class LLMResult:
     output_tokens: int
     latency_ms: int
     dry_run: bool
+    stop_reason: str = "end_turn"    # "max_tokens" means the reply was cut off
 
 
 PRICES_PER_MTOK = {  # from the models page, Sep 2026; used for the audit cost estimate only
@@ -74,7 +75,7 @@ def complete(tier: str, system: str, user: str, max_tokens: int | None = None, d
     )
     text = "".join(block.text for block in resp.content if getattr(block, "type", "") == "text")
     return LLMResult(text, model_id, resp.usage.input_tokens, resp.usage.output_tokens,
-                     int((time.time() - t0) * 1000), False)
+                     int((time.time() - t0) * 1000), False, getattr(resp, "stop_reason", "end_turn") or "end_turn")
 
 
 def extract_json(text: str) -> dict | None:
