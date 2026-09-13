@@ -78,3 +78,22 @@ def test_output_guardrail_blocks_advice(indexed):
         {"topic": "other", "text": "Two preventives required.", "citations": [1]}], "not_in_documents": []}
     _, gate = output_guardrails(draft, packet)
     assert gate.passed is False
+
+
+def test_appeal_questions_pull_in_reference_docs(indexed):
+    """A question about appeals adds the reference documents (state law, ODI)
+    to the retrieval set; an ordinary coverage question does not, and the
+    reference docs never count toward plan-match confidence."""
+    from trailheadrx.retrieve import build_packet, plan_match
+    pm = plan_match("UnitedHealthcare", "commercial", "Emgality")
+    assert not any(d["line_of_business"] == "reference" for d in pm.documents)
+    plain = build_packet("What do I have to try before Emgality is covered?", "UnitedHealthcare", "commercial", "Emgality", "")
+    assert not any(c.line_of_business == "reference" for c in plain.chunks)
+    appeal = build_packet("My plan denied Emgality. How do I appeal?", "UnitedHealthcare", "commercial", "Emgality", "")
+    assert appeal.plan_match.confidence >= 0.6
+    assert any(c.line_of_business == "reference" for c in appeal.chunks), "reference passage not retrieved"
+    joined = " ".join(c.text for c in appeal.chunks if c.line_of_business == "reference").lower()
+    assert "eighty days" in joined or "external review" in joined
+    # Medicare Advantage appeals run through CMS, so Ohio references stay out.
+    ma = build_packet("How do I appeal a denial?", "UnitedHealthcare", "medicare_advantage", "Emgality", "")
+    assert not any(c.line_of_business == "reference" for c in ma.chunks)

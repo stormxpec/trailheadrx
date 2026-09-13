@@ -501,8 +501,8 @@ documents:
     effective_or_reviewed: "eff. 2019-04-05"
     st_note: Insurer must provide accessible exemption process and publish ST drug lists; decide urgent requests in 48 h, others in 10 calendar days (deemed granted if late); mandatory exemption when drug is contraindicated, patient previously tried/failed the required drug or an FDA-approved equivalent, or patient is stable on current drug; appeal to clinical peer, then external review under ORC Ch. 3922. Does NOT apply to self-funded ERISA plans.
     status: found
-    file: null
-    downloaded_on: null
+    file: ohio-orc-3901-832.html
+    downloaded_on: "2026-09-13"
     related_urls:
       - https://codes.ohio.gov/ohio-revised-code/section-3901.83     # definitions (not yet verified)
       - https://codes.ohio.gov/ohio-revised-code/section-5164.7514   # Medicaid analog (not yet verified)
@@ -515,10 +515,49 @@ documents:
     policy_id: null
     url: https://insurance.ohio.gov/about-us/complaint-center/health-coverage-external-review-process
     effective_or_reviewed: "External Review System via OH|ID since 2025-12-15"
-    st_note: Consumer toolkit (brochure, FAQ); hotline 800-686-1526; external.review@insurance.ohio.gov.
-    status: found
+    st_note: Consumer toolkit (brochure, FAQ); hotline 800-686-1526; external.review@insurance.ohio.gov. Page is a landing page (toolkit is linked, not inline) and returned 404 to non-browser fetches on 2026-09-13; the citable rules are in ORC Chapter 3922 below.
+    status: landing_only
     file: null
     downloaded_on: null
     related_urls:
       - https://insurance.ohio.gov/companies/product-regulation-and-actuarial-services/resources/health-external-review
       - https://insurance.ohio.gov/Company/Pages/OhioInternalAppealandExternalReviewModelNotices.aspx
+
+  - payer: Ohio Revised Code
+    line_of_business: reference
+    benefit_type: n/a
+    scope: External review — how and when to request one
+    title: ORC 3922.02 — Request for review of adverse benefit determination
+    policy_id: "ORC 3922.02"
+    url: https://codes.ohio.gov/ohio-revised-code/section-3922.02
+    effective_or_reviewed: "eff. 2012-09-06"
+    st_note: Written request to the health plan within 180 days of the final adverse benefit determination; expedited review may be requested orally; eligible regardless of the cost of the service.
+    status: found
+    file: ohio-orc-3922-02.html
+    downloaded_on: "2026-09-13"
+
+  - payer: Ohio Revised Code
+    line_of_business: reference
+    benefit_type: n/a
+    scope: External review — standard review timing
+    title: ORC 3922.08 — Provisions applicable to standard reviews; timing
+    policy_id: "ORC 3922.08"
+    url: https://codes.ohio.gov/ohio-revised-code/section-3922.08
+    effective_or_reviewed: "eff. 2011-12-26"
+    st_note: Plan must send its file to the independent review organization within 5 days; review is not delayed by the plan's failure to do so, and the IRO may reverse the denial if the plan misses the deadline.
+    status: found
+    file: ohio-orc-3922-08.html
+    downloaded_on: "2026-09-13"
+
+  - payer: Ohio Revised Code
+    line_of_business: reference
+    benefit_type: n/a
+    scope: External review — expedited review
+    title: ORC 3922.09 — Expedited external review
+    policy_id: "ORC 3922.09"
+    url: https://codes.ohio.gov/ohio-revised-code/section-3922.09
+    effective_or_reviewed: "eff. 2012-09-06"
+    st_note: Expedited review available when the treating physician certifies that waiting would seriously jeopardize life, health, or ability to regain maximum function.
+    status: found
+    file: ohio-orc-3922-09.html
+    downloaded_on: "2026-09-13"

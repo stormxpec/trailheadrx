@@ -40,6 +40,8 @@ A working glossary. Each term is the word the industry uses, what it means in on
 
 **Hybrid retrieval.** Both of the above, merged. *Ours: yes — "Emgality" and "J3032" must match exactly, criteria language must match by meaning.*
 
+**Reciprocal rank fusion (RRF).** How the two ranked lists become one: each passage scores 1/(60 + rank) from each list, summed, so a passage both searches found beats a passage one search loved. *Ours: yes, in `retrieve.hybrid_retrieve`. Worked numbers from Ben's UHC run are in `docs/concepts/weighting-and-scoring.md`.*
+
 **Metadata filtering.** Restrict search to chunks whose tags match. *Ours: only the patient's matched plan.*
 
 **Reranking.** A second, more careful pass that reorders the top candidates. *Ours: optional; added if evals show retrieval misses.*

@@ -98,8 +98,8 @@ scenarios:
     lob: medicaid_mco
     drug: Aimovig
     expect:
-      eligibility_contains: "copay cards cannot be used with Medicare, Medicaid"
-      eligibility_contains_2: "step-therapy exemption law applies"
+      eligibility_contains: "do not let you use the drug maker's copay card"
+      eligibility_contains_2: "Ohio law gives you the right to ask your health plan to skip these steps"
 
   - id: elig-medicare-law
     category: eligibility
@@ -108,7 +108,7 @@ scenarios:
     lob: medicare_advantage
     drug: Vyepti
     expect:
-      eligibility_contains: "does not apply to this kind of plan"
+      eligibility_contains: "does not cover Medicare plans"
 
   - id: elig-selffunded
     category: eligibility
@@ -119,7 +119,7 @@ scenarios:
     self_funded: true
     expect:
       eligibility_contains: "self-funded"
-      eligibility_contains_2: "copay cards are generally available"
+      eligibility_contains_2: "you can usually use the drug maker's copay card"
 
   # ---- groundedness (needs live model + real documents) -------------------
   - id: gnd-uhc-emgality-steps

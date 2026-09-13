@@ -26,7 +26,13 @@ def indexed(tmp_path_factory):
         "title": "FIXTURE — CGRP Receptor Antagonists PA Program", "policy_id": "FIX-001",
         "url": "https://example.invalid/fixture.pdf", "effective_or_reviewed": "2026-07-01",
         "file": str(fixture), "downloaded_on": "2026-09-12", "status": "found",
+    }, {
+        "payer": "FIXTURE State Code", "line_of_business": "reference", "benefit_type": "n/a",
+        "scope": "External review — fixture", "title": "FIXTURE — External review rules", "policy_id": "FIX-REF-1",
+        "url": "https://example.invalid/fixture-ref.html", "effective_or_reviewed": "2026-01-01",
+        "file": str(ROOT / "tests" / "fixtures" / "fixture-appeals-reference.html"),
+        "downloaded_on": "2026-09-13", "status": "found",
     }]
     counts = ingest(rebuild=True, documents=docs)
-    assert counts["documents"] == 1
+    assert counts["documents"] == 2
     return counts

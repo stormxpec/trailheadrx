@@ -1,4 +1,255 @@
 _meta:
-  description: Structured records of manufacturer and access programs for migraine drugs. Filled in session 3.
-  verified_on: null
-programs: []
+  description: >
+    Manufacturer and access programs for migraine medicines, as read on the
+    maker's own pages. Every record carries the URL it came from and the date
+    it was read (verified_on). Program terms change often — the freshness
+    rule (G6) flags anything older than the threshold. "not_found" means the
+    page did not state it; never guess. Facts here are rendered by code into
+    the "other ways to get it" section; the model does not write that section.
+  verified_on: "2026-09-13"
+  fpl_note: >
+    Income ceilings are given as a percent of the Federal Poverty Level (FPL)
+    where the maker states one. 300% FPL for a household of 1 is roughly
+    $47k/yr in 2026; of 4 roughly $96k/yr. Check the program's own table.
+
+programs:
+
+  - drug: Emgality
+    maker: Eli Lilly
+    dtc:
+      name: LillyDirect
+      how: "Cash purchase through Lilly's own pharmacy partners; free delivery or pickup; prescription required."
+      price_text: "starting at $299 per month (120 mg pen); taxes and fees may apply"
+      url: https://www.lilly.com/lillydirect/medicines/emgality
+      verified_on: "2026-09-13"
+    copay_card:
+      name: Emgality Savings Card
+      eligibility: "commercial insurance that covers Emgality; age 18+; US/PR resident"
+      you_pay: "as little as $35 per month"
+      annual_max: "$4,900 per calendar year (up to 13 fills)"
+      expires: "2026-12-31"
+      url: https://emgality.lilly.com/savings-support
+      verified_on: "2026-09-13"
+    bridge:
+      name: Emgality Savings Card — first fill
+      terms: "if your plan does not cover Emgality, first 1-month fill for as little as $0 (one time)"
+      url: https://emgality.lilly.com/savings-support
+      verified_on: "2026-09-13"
+    pap:
+      name: Lilly Cares Foundation
+      income_ceiling_fpl_pct: 300
+      insurance_rule: "uninsured, or Medicare Part D; not Medicaid, full Extra Help, or VA"
+      url: https://www.lillycares.com/how-to-apply
+      verified_on: "2026-09-13"
+    exclusions: "savings card and $35 offer exclude anyone in a state, federal, or government-funded program"
+    phone: "1-800-545-5979"
+
+  - drug: Aimovig
+    maker: Amgen
+    dtc: null
+    copay_card:
+      name: Aimovig Co-Pay Card
+      eligibility: "commercial insurance; under 18 must enroll by phone; US/PR/territories"
+      you_pay: "as little as $5 per month per the prescriber site; the patient site says as little as $49 — confirm by phone"
+      annual_max: "a maximum annual benefit applies; amount not stated on the pages read"
+      expires: "re-enrollment required periodically; no fixed date published"
+      url: https://www.aimovig.com/paying-for-aimovig
+      verified_on: "2026-09-13"
+      confidence: low
+    bridge: null
+    pap:
+      name: Amgen Safety Net Foundation
+      income_ceiling_fpl_pct: null
+      insurance_rule: "uninsured or plan excludes the medicine; Medicare Part D may qualify; must show ineligibility for Medicaid/Extra Help"
+      url: https://www.amgensafetynetfoundation.com/eligibility.html
+      verified_on: "2026-09-13"
+    exclusions: "card not valid with Medicare, Medicaid, TRICARE, DoD, VA, or other government programs; not for cash-pay"
+    phone: "1-833-246-6844"
+
+  - drug: Ajovy
+    maker: Teva
+    dtc: null
+    copay_card:
+      name: AJOVY Savings Card
+      eligibility: "commercial prescription insurance (pharmacy benefit); US/territories"
+      you_pay: "as little as $15"
+      annual_max: "per-prescription and annual limits apply; amounts not stated"
+      expires: "2026-12-31"
+      url: https://www.ajovy.com/savings
+      verified_on: "2026-09-13"
+    bridge: null
+    pap:
+      name: Teva Cares Foundation
+      income_ceiling_fpl_pct: 300
+      insurance_rule: "uninsured or unable to afford; under 150% FPL must show Extra Help denial first; up to 12 months, reapply annually"
+      url: https://www.tevacares.org/faq/
+      verified_on: "2026-09-13"
+    exclusions: "card not available to anyone eligible for Medicare, Medicaid, TRICARE, VA, DoD, or other public coverage; not for cash-pay"
+    phone: "877-237-4881"
+
+  - drug: Vyepti
+    maker: Lundbeck
+    dtc: null
+    copay_card:
+      name: VYEPTI CONNECT Copay Assistance
+      eligibility: "commercial insurance; age 17+; US/PR"
+      you_pay: "as little as $0 per infusion (every 3 months), plus up to $200 per infusion toward the administration cost"
+      annual_max: "a calendar-year maximum applies; amount not stated"
+      expires: "none published"
+      url: https://www.vyepti.com/financial-assistance
+      verified_on: "2026-09-13"
+    bridge: null
+    pap:
+      name: Lundbeck Patient Assistance Program
+      income_ceiling_fpl_pct: null
+      insurance_rule: "referenced by Lundbeck; criteria not readable on a Lundbeck page — call to confirm"
+      url: https://www.vyepti.com/financial-assistance
+      verified_on: "2026-09-13"
+      confidence: low
+    exclusions: "not available to anyone in Medicare, Medicaid, or other government programs; Massachusetts and Rhode Island residents get no administration-cost help"
+    phone: "833-489-3784"
+
+  - drug: Nurtec ODT
+    maker: Pfizer
+    dtc:
+      name: PfizerForAll
+      how: "Pfizer's patient site offers telehealth and provider search for migraine; no cash price or direct purchase for Nurtec was shown"
+      price_text: not_found
+      url: https://www.pfizerforall.com/migraine
+      verified_on: "2026-09-13"
+      confidence: low
+    copay_card:
+      name: Nurtec ODT Savings Card
+      eligibility: "commercial insurance"
+      you_pay: "as little as $0 per month"
+      annual_max: "$7,000"
+      expires: not_found
+      url: https://www.nurtec.com/savings
+      verified_on: "2026-09-13"
+    bridge:
+      name: Nurtec free fill while benefits are verified
+      terms: "one prescription fill at no cost while your plan reviews (up to 16 tablets, one time)"
+      url: https://www.nurtec.com/savings
+      verified_on: "2026-09-13"
+    pap:
+      name: Pfizer Patient Assistance (Pfizer RxPathways)
+      income_ceiling_fpl_pct: 300
+      insurance_rule: "uninsured or government-insured only; commercially insured are not eligible; Part D patients must enroll in the Medicare Prescription Payment Plan"
+      url: https://www.pfizerrxpathways.com/node/2617
+      verified_on: "2026-09-13"
+    exclusions: "Pfizer's standard card terms exclude Medicare, Medicaid, TRICARE, VA, and cash-pay (stated on the Zavzpret card; not restated on the Nurtec page)"
+    phone: "1-866-222-4183"
+
+  - drug: Zavzpret
+    maker: Pfizer
+    dtc: null
+    copay_card:
+      name: Zavzpret Savings Card
+      eligibility: "commercial insurance; age 18+"
+      you_pay: "as little as $0; one redemption per 30 days"
+      annual_max: not_found
+      expires: "2026-12-31"
+      url: https://www.zavzpret.com/savings
+      verified_on: "2026-09-13"
+    bridge:
+      name: Zavzpret free fill while benefits are verified
+      terms: "up to 1 fill at no cost while your plan reviews (up to 6 devices total)"
+      url: https://www.zavzpret.com/savings
+      verified_on: "2026-09-13"
+    pap:
+      name: Pfizer Patient Assistance (Pfizer RxPathways)
+      income_ceiling_fpl_pct: 300
+      insurance_rule: "uninsured or government-insured only"
+      url: https://www.pfizerrxpathways.com/resources/patients
+      verified_on: "2026-09-13"
+    exclusions: "card not for Medicare, Medicaid, TRICARE, VA, state programs, or cash-pay"
+
+  - drug: Qulipta
+    maker: AbbVie
+    dtc: null
+    copay_card:
+      name: QULIPTA Complete Savings Card
+      eligibility: "commercial insurance; age 18+; void in certain states"
+      you_pay: "as little as $0 per monthly fill"
+      annual_max: "$7,000 per calendar year"
+      expires: not_found
+      url: https://www.qulipta.com/savings-support
+      verified_on: "2026-09-13"
+    bridge:
+      name: Qulipta no-charge fills while coverage is pending
+      terms: "up to 2 one-month fills at no charge while your plan reviews"
+      url: https://www.qulipta.com/savings-support
+      verified_on: "2026-09-13"
+    pap:
+      name: myAbbVie Assist
+      income_ceiling_fpl_pct: null
+      income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000; +$22,720 each additional"
+      insurance_rule: "limited or no coverage; commercially insured not eligible; Part D under 150% FPL must show Extra Help denial"
+      url: https://www.abbvie.com/patients/patient-assistance.html
+      verified_on: "2026-09-13"
+    exclusions: "card not for Medicare (incl. Part D and Advantage), Medigap, Medicaid, TRICARE, DoD, VA"
+    phone: "1-800-222-6885"
+
+  - drug: Ubrelvy
+    maker: AbbVie
+    dtc: null
+    copay_card:
+      name: UBRELVY Savings Card
+      eligibility: "commercial insurance; age 18+; void in certain states"
+      you_pay: "as little as $0 per monthly fill"
+      annual_max: "$7,000 per calendar year"
+      expires: not_found
+      url: https://www.ubrelvy.com/savings
+      verified_on: "2026-09-13"
+    bridge:
+      name: Ubrelvy no-charge fills while coverage is pending
+      terms: "up to 2 one-month fills at no charge while your plan reviews; up to 4 if the plan has no review process"
+      url: https://www.ubrelvy.com/savings
+      verified_on: "2026-09-13"
+    pap:
+      name: myAbbVie Assist
+      income_ceiling_fpl_pct: null
+      income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000; +$22,720 each additional"
+      insurance_rule: "limited or no coverage; commercially insured not eligible"
+      url: https://www.abbvie.com/patients/patient-assistance.html
+      verified_on: "2026-09-13"
+    exclusions: "card not for Medicare, Medicaid, or government programs; not for cash-pay"
+    phone: "1-844-577-6239"
+
+  - drug: Botox
+    maker: AbbVie
+    dtc: null
+    copay_card:
+      name: BOTOX Savings Program
+      eligibility: "commercial insurance; covers the drug and the injection procedure cost, not the office-visit copay"
+      you_pay: "may pay as little as $0"
+      annual_max: "$4,000 per year (first treatment up to $1,300, later treatments up to $1,000; claims within 180 days)"
+      expires: not_found
+      url: https://www.botoxchronicmigraine.com/savings-support
+      verified_on: "2026-09-13"
+    bridge: null
+    pap:
+      name: myAbbVie Assist
+      income_ceiling_fpl_pct: null
+      income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000"
+      insurance_rule: "limited or no coverage; a Botox application form exists but Botox was not shown in the program's medicine list on the page read"
+      url: https://www.abbvie.com/patients/patient-assistance.html
+      verified_on: "2026-09-13"
+      confidence: low
+    exclusions: "not for Medicare, Medicaid, TRICARE, government-reimbursed or state assistance programs, employer retiree plans; not for cash-pay"
+    phone: "1-800-442-6869"
+
+  - drug: Reyvow
+    maker: Eli Lilly
+    status: discontinued
+    note: "Lilly discontinued Reyvow worldwide (not for safety reasons); US supply expected only through mid-2026. Savings card page retired. Treat as unavailable."
+    dtc: null
+    copay_card: null
+    bridge: null
+    pap:
+      name: Lilly Cares Foundation
+      income_ceiling_fpl_pct: 300
+      insurance_rule: "still listed while supplies last"
+      url: https://www.lillycares.com/how-to-apply
+      verified_on: "2026-09-13"
+    exclusions: ""

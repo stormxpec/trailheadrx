@@ -17,6 +17,7 @@ from .guardrails import input_guardrails, output_guardrails
 from .prompt import route, draft
 from .retrieve import build_packet
 from .rules import rules_text, eligibility_summary
+from .programs import other_routes
 from .verify import verify
 
 
@@ -203,24 +204,5 @@ def answer(question: str, payer: str, line_of_business: str, drug: str, self_fun
     trace.finish("answered", claims=len(final["claims"]))
     return Answer("answered", "", final.get("summary", ""), final["claims"], final.get("not_in_documents", []),
                   elig, cites, final.get("warnings", []), final.get("framing", ""), qtype, trace.id, dry,
-                  wait_estimate=final.get("wait_estimate"), other_routes=other_routes(packet, line_of_business),
+                  wait_estimate=final.get("wait_estimate"), other_routes=other_routes(drug, line_of_business),
                   drug=(packet.drug or {}).get("brand", drug), left_out=pruned)
-
-
-def other_routes(packet, line_of_business: str) -> list[str]:
-    """A first version of Layer 2: what the drug list already knows about ways
-    around coverage. Session 3 replaces these with verified program records
-    (terms, eligibility, verified-on date). Until then every line says so."""
-    rec = packet.drug or {}
-    brand = rec.get("brand", packet.plan_match.drug)
-    maker = rec.get("manufacturer", "the drug maker")
-    programs = rec.get("programs") or {}
-    out: list[str] = []
-    if programs.get("dtc"):
-        out.append(f"{maker} lists {brand} on its direct-purchase program ({programs['dtc'].split(' — ')[0]}), where you "
-                   f"pay cash and skip the health plan entirely. That means no waiting on approvals or step therapy, but "
-                   f"it also means nothing you pay counts toward your deductible, and a cash purchase does not count as "
-                   f"a 'try' if you later go through your plan. Current price and terms: not verified yet.")
-    if not out:
-        out.append(f"No direct-purchase option for {brand} is on file yet. Session 3 adds verified maker programs.")
-    return out

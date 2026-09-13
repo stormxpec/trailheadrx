@@ -23,7 +23,7 @@ preventive_branded:
     route: subcutaneous, monthly
     benefit_type: pharmacy
     indications: [migraine prevention]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
   - generic: fremanezumab
     brand: Ajovy
@@ -32,7 +32,7 @@ preventive_branded:
     route: subcutaneous, monthly or quarterly
     benefit_type: pharmacy
     indications: [migraine prevention]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
   - generic: galcanezumab
     brand: Emgality
@@ -41,11 +41,7 @@ preventive_branded:
     route: subcutaneous, monthly
     benefit_type: pharmacy
     indications: [migraine prevention, episodic cluster headache]
-    programs:
-      dtc: "LillyDirect — listed; verify current terms"
-      copay_card: null
-      pap: null
-      bridge: null
+    programs: see corpus/programs/manifest.yaml
 
   - generic: eptinezumab
     brand: Vyepti
@@ -54,7 +50,7 @@ preventive_branded:
     route: intravenous infusion, quarterly
     benefit_type: medical
     indications: [migraine prevention]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
   - generic: atogepant
     brand: Qulipta
@@ -63,7 +59,7 @@ preventive_branded:
     route: oral, daily
     benefit_type: pharmacy
     indications: [episodic migraine prevention, chronic migraine prevention]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
   - generic: rimegepant
     brand: Nurtec ODT
@@ -72,11 +68,7 @@ preventive_branded:
     route: oral disintegrating tablet
     benefit_type: pharmacy
     indications: [acute migraine, episodic migraine prevention]
-    programs:
-      dtc: "PfizerForAll — listed; verify current terms"
-      copay_card: null
-      pap: null
-      bridge: null
+    programs: see corpus/programs/manifest.yaml
 
   - generic: onabotulinumtoxinA
     brand: Botox
@@ -85,7 +77,7 @@ preventive_branded:
     route: in-office injections, every 12 weeks
     benefit_type: medical
     indications: [chronic migraine prevention (15+ headache days/month)]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
 # ---------------------------------------------------------------------------
 # Branded acute treatments
@@ -98,7 +90,7 @@ acute_branded:
     route: oral
     benefit_type: pharmacy
     indications: [acute migraine]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
   - generic: zavegepant
     brand: Zavzpret
@@ -107,11 +99,7 @@ acute_branded:
     route: nasal spray
     benefit_type: pharmacy
     indications: [acute migraine]
-    programs:
-      dtc: "PfizerForAll — listed; verify current terms"
-      copay_card: null
-      pap: null
-      bridge: null
+    programs: see corpus/programs/manifest.yaml
 
   - generic: lasmiditan
     brand: Reyvow
@@ -121,7 +109,8 @@ acute_branded:
     benefit_type: pharmacy
     indications: [acute migraine]
     controlled_substance: "Schedule V"
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    status: discontinued          # Lilly discontinued Reyvow in 2026; US supply through mid-2026
+    programs: see corpus/programs/manifest.yaml
 
   - generic: dihydroergotamine
     brand: Trudhesa
@@ -130,7 +119,7 @@ acute_branded:
     route: nasal spray
     benefit_type: pharmacy
     indications: [acute migraine]
-    programs: {dtc: null, copay_card: null, pap: null, bridge: null}
+    programs: see corpus/programs/manifest.yaml
 
 # ---------------------------------------------------------------------------
 # Generic preventives — the usual step-therapy rungs.

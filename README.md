@@ -11,7 +11,7 @@ Trailhead Rx is also a learning project. It is built to exercise three ideas in 
 
 ## Status
 
-Session two: Layer 1 runs end to end — ingest → hybrid retrieval → prompt builder → model → verifier → output guardrails → audit log — with a CLI, 14 unit tests, and 17 golden eval scenarios (12 run without a model; 5 groundedness scenarios need a live key and the ring-one documents). Layer 2 (routes), the form UI, and the card scan are later sessions.
+Session three: both layers run end to end from the command line. Layer 1 (what your plan says) — ingest → hybrid retrieval → prompt builder → model → verifier → output guardrails → audit log — answers in plain language with a wait estimate, a class comparison table (`--compare-class`), and, for appeal questions, citations to Ohio law (ORC 3901.832 step-therapy exemption, ORC Chapter 3922 external review). Layer 2 (other ways to get it) renders verified manufacturer program records from `corpus/programs/manifest.yaml` with rules-as-code eligibility, so a Medicare member is told the copay card is off-limits and why. 17 unit tests, 17 eval scenarios. The form UI and hosting are session 4/5.
 
 ## Run it
 
@@ -22,13 +22,29 @@ pip install -r requirements.txt
 cp .env.example .env            # then paste your Anthropic API key into .env
 export $(cat .env | xargs)      # or: export ANTHROPIC_API_KEY=sk-ant-...
 
-# index the policy documents you downloaded into corpus/policies/
+# download the Ohio law pages (public domain; the payer PDFs you fetch by hand — see the manifest)
+cd corpus/policies
+curl -sSL -o ohio-orc-3901-832.html https://codes.ohio.gov/ohio-revised-code/section-3901.832
+curl -sSL -o ohio-orc-3922-02.html  https://codes.ohio.gov/ohio-revised-code/section-3922.02
+curl -sSL -o ohio-orc-3922-08.html  https://codes.ohio.gov/ohio-revised-code/section-3922.08
+curl -sSL -o ohio-orc-3922-09.html  https://codes.ohio.gov/ohio-revised-code/section-3922.09
+cd ../..
+
+# index the documents in corpus/policies/
 PYTHONPATH=src python3 -m trailheadrx ingest
 PYTHONPATH=src python3 -m trailheadrx status
 
-# ask a Layer 1 question
+# ask a question (Layer 1 answer + Layer 2 routes)
 PYTHONPATH=src python3 -m trailheadrx ask --payer "UnitedHealthcare" --lob commercial --drug Emgality \
   "What do I have to try before my plan will cover Emgality?"
+
+# the same, plus a coverage-path table for every medicine in the class
+PYTHONPATH=src python3 -m trailheadrx ask --payer "UnitedHealthcare" --lob commercial --drug Emgality \
+  --compare-class "What do I have to try before my plan will cover Emgality?"
+
+# an appeal question pulls in the Ohio law pages as citable passages
+PYTHONPATH=src python3 -m trailheadrx ask --payer "UnitedHealthcare" --lob commercial --drug Emgality \
+  "My plan denied Emgality. How do I appeal, and how long do they have to answer?"
 
 # tests (no model calls) and evals (the scorecard)
 python3 -m pytest -q tests
@@ -65,6 +81,8 @@ src/trailheadrx/     the application — see "Which file is which box" below
 | Verifier | `verify.py` | LLM-as-judge, groundedness |
 | Output guardrails | `guardrails.py` | citation check, abstention, freshness, framing |
 | Rules-as-code | `rules.py` + `governance/rules.yaml` | eligibility engine |
+| Other ways to get it (Layer 2) | `programs.py` + `corpus/programs/manifest.yaml` | rules-as-code, freshness |
+| Class comparison | `compare.py` | fan-out, per-row LLM-as-judge |
 | Tracing | `audit.py` | audit log |
 | Evals | `evals/run.py` + `evals/scenarios.yaml` | golden set, regression |
 | The whole request path | `pipeline.py` | chain |

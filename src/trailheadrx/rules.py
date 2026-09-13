@@ -94,8 +94,9 @@ def pap_income_eligible(household_fpl_multiple: float | None, program_max_multip
 
 def eligibility_summary(line_of_business: str, self_funded: bool | None = None) -> list[Decision]:
     """The decisions that accompany every answer for a given plan type."""
+    # Copay-card and assistance specifics now come from the programs corpus
+    # (programs.py); this summary keeps the plan-type rules a patient must know.
     return [
-        copay_card_allowed(line_of_business),
         ohio_step_therapy_law_applies(line_of_business, self_funded),
-        pap_income_eligible(None),
+        copay_card_allowed(line_of_business),
     ]

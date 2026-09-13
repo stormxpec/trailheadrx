@@ -81,3 +81,22 @@ def test_chunker_respects_headings_and_pages():
     assert all(c.page_start <= c.page_end for c in chunks)
     sections = {c.section for c in chunks}
     assert any("Coverage Criteria" in s for s in sections)
+
+
+
+# ---- Programs corpus → other routes (rules-as-code applied) ----------------
+
+def test_other_routes_commercial_vs_medicare():
+    from trailheadrx.programs import other_routes
+    com = "\n".join(other_routes("Emgality", "commercial"))
+    med = "\n".join(other_routes("Emgality", "medicare_advantage"))
+    assert "LillyDirect" in com and "$35" in com and "Lilly Cares" in com
+    assert "not available to you" in med and "$35" not in med.split("not available")[0]
+    assert "Lilly Cares" in med                      # assistance still shown for Medicare
+    assert "Reyvow" not in com
+
+
+def test_other_routes_discontinued_and_unknown():
+    from trailheadrx.programs import other_routes
+    assert "discontinued" in other_routes("Reyvow", "commercial")[0]
+    assert "on file" in other_routes("Ozempic", "commercial")[0]

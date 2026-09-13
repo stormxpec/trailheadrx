@@ -100,7 +100,9 @@ ROW_JUDGE_SYSTEM = (
     "You are a strict reviewer. You are given ONE medicine, a short record of what a health plan requires before "
     "covering it, and the passage(s) the record cites. Answer two questions using only the passage text: "
     "(1) Does the passage state these requirements FOR THIS MEDICINE specifically (not for a neighboring medicine "
-    "in the same passage)? (2) Is the 'must_try_first' text accurate to the passage? "
+    "in the same passage)? Note: a rule that requires trying OTHER medicines first is normal and does not make it "
+    "the wrong drug — WRONG_DRUG means the passage attaches these requirements to a different medicine than the one "
+    "named. (2) Is the 'must_try_first' text accurate to the passage? "
     "Reply with JSON only: {\"verdict\": \"SUPPORTED\" | \"WRONG_DRUG\" | \"NOT_SUPPORTED\", \"reason\": \"...\"}. "
     "A record that says the medicine must be tried before itself is always WRONG_DRUG."
 )

@@ -223,9 +223,13 @@ def hybrid_retrieve(question: str, pm: PlanMatch, conn: sqlite3.Connection | Non
     ).fetchall()
     semantic_rank: dict[int, int] = {}
     if emb_rows:
-        mat = np.nan_to_num(np.stack([np.frombuffer(r["vector"], dtype=np.float32) for r in emb_rows]))
-        qv = embed([f"{pm.drug}: {question}"])[0]
-        sims = mat @ qv
+        mat = np.stack([np.frombuffer(r["vector"], dtype=np.float32) for r in emb_rows]).astype(np.float64)
+        mat[~np.isfinite(mat)] = 0.0
+        qv = embed([f"{pm.drug}: {question}"])[0].astype(np.float64)
+        qv[~np.isfinite(qv)] = 0.0
+        with np.errstate(all="ignore"):
+            sims = mat @ qv
+        sims[~np.isfinite(sims)] = -1.0
         order = np.argsort(-sims)[:n_cand]
         semantic_rank = {int(emb_rows[i]["chunk_id"]): rank + 1 for rank, i in enumerate(order)}
 
@@ -294,9 +298,35 @@ class ContextPacket:
         }
 
 
+APPEAL_CUES = re.compile(r"\b(appeal|appeals|denied|denial|exception|exemption|external review|overturn|grievance)\b", re.I)
+
+# Plan types the Ohio Department of Insurance regulates. Medicare Advantage
+# appeals run through CMS, not the state, so the Ohio references would mislead.
+STATE_REGULATED = {"commercial", "marketplace", "medicaid_mco", "medicaid_ffs"}
+
+
+def add_reference_docs(question: str, pm: PlanMatch, conn: sqlite3.Connection) -> None:
+    """When the question is about appeals or exceptions, pull the Ohio law and
+    ODI appeal pages into the retrieval set so the answer can cite them.
+    They are `line_of_business: reference` rows in the manifest: not payer
+    policy, so they never affect plan-match confidence — they only add
+    passages the model may cite."""
+    if not APPEAL_CUES.search(question) or pm.line_of_business not in STATE_REGULATED:
+        return
+    rows = conn.execute("SELECT payer, line_of_business, benefit_type, scope, title, policy_id, url, "
+                        "effective_or_reviewed, file, downloaded_on, status FROM documents "
+                        "WHERE line_of_business='reference'").fetchall()
+    for r in rows:
+        if r["file"] not in pm.indexed_files:
+            pm.documents.append(dict(r))
+            pm.indexed_files.append(r["file"])
+
+
 def build_packet(question: str, payer: str, line_of_business: str, drug: str, rules_excerpt: str) -> ContextPacket:
     conn = open_db()
     pm = plan_match(payer, line_of_business, drug, conn)
+    if pm.confidence >= config.CONFIG["thresholds"]["plan_match_min_confidence"]:
+        add_reference_docs(question, pm, conn)
     chunks = hybrid_retrieve(question, pm, conn) if pm.confidence >= config.CONFIG["thresholds"]["plan_match_min_confidence"] else []
     conn.close()
     return ContextPacket(question, resolve_drug(drug), pm, chunks, rules_excerpt)
