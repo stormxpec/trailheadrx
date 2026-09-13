@@ -1,3 +1,5 @@
-# Pinned in session 2 once the stack is chosen.
-anthropic
-pyyaml
+anthropic>=0.40
+pymupdf>=1.24
+sentence-transformers>=3.0
+numpy>=1.26
+pyyaml>=6.0

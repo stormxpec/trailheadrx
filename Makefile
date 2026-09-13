@@ -1,0 +1,20 @@
+# Common commands. Run from the repo root.
+PY=python3
+export PYTHONPATH=src
+
+setup:            ## create venv and install dependencies
+	$(PY) -m venv .venv && . .venv/bin/activate && pip install -U pip && pip install -r requirements.txt
+
+ingest:           ## index every downloaded policy document
+	$(PY) -m trailheadrx ingest
+
+status:           ## what is indexed, which mode
+	$(PY) -m trailheadrx status
+
+eval:             ## run the golden scenarios and print the scorecard
+	$(PY) evals/run.py
+
+test:             ## unit tests for rules-as-code and guardrails (no model calls)
+	$(PY) -m pytest -q tests
+
+.PHONY: setup ingest status eval test

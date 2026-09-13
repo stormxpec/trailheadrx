@@ -1,0 +1,26 @@
+_meta:
+  description: >
+    Human-readable rules the app must follow. Session 2 wires these into code.
+    Each rule has an id, a plain statement, how it is enforced, and how it is tested.
+rules:
+  - id: G1
+    statement: Never recommend a drug or compare clinical effectiveness.
+    enforced_by: system prompt + output classifier + eval
+  - id: G2
+    statement: Every factual claim carries a citation (payer, document, version, page) or a program source URL with a verified-on date.
+    enforced_by: verifier step; answers without citations are rejected
+  - id: G3
+    statement: Abstain when the plan/drug pair is not in corpus or plan match confidence is below threshold.
+    enforced_by: retrieval gate in code
+  - id: G4
+    statement: Eligibility rules are enforced in code, not by the model (Medicare/Medicaid cannot use manufacturer copay cards; PAP income thresholds; Ohio step-therapy law applies to state-regulated plans only).
+    enforced_by: rules engine
+  - id: G5
+    statement: Store nothing about the person. Card images processed in memory and discarded. Free text screened for PHI and refused.
+    enforced_by: code + PHI detector + eval
+  - id: G6
+    statement: Any option older than 30 days since verification shows a freshness warning.
+    enforced_by: rendering layer
+  - id: G7
+    statement: Output at roughly an eighth-grade reading level.
+    enforced_by: eval

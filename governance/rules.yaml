@@ -1,26 +1,72 @@
 _meta:
   description: >
-    Human-readable rules the app must follow. Session 2 wires these into code.
-    Each rule has an id, a plain statement, how it is enforced, and how it is tested.
+    Human-readable rules the app must follow. Each rule has an id, a plain
+    statement, how it is enforced, and which module enforces it. The
+    `system_prompt_rules` block is inserted verbatim into every model prompt;
+    the `eligibility` block is data for rules.py (rules-as-code) and is never
+    left to the model's judgment.
+
 rules:
   - id: G1
-    statement: Never recommend a drug or compare clinical effectiveness.
-    enforced_by: system prompt + output classifier + eval
+    statement: Never recommend a drug, compare clinical effectiveness, or suggest a dose.
+    enforced_by: system prompt + output guardrail (advice-language check) + eval
+    module: guardrails.py
   - id: G2
-    statement: Every factual claim carries a citation (payer, document, version, page) or a program source URL with a verified-on date.
-    enforced_by: verifier step; answers without citations are rejected
+    statement: Every factual claim carries a citation to a passage in the context packet (payer, document, version, page) or a program source URL with a verified-on date.
+    enforced_by: structured output requires a passage number per claim; verifier rejects claims whose passage does not exist or does not support them
+    module: verify.py
   - id: G3
-    statement: Abstain when the plan/drug pair is not in corpus or plan match confidence is below threshold.
-    enforced_by: retrieval gate in code
+    statement: Abstain when the plan/drug pair is not in corpus or plan-match confidence is below threshold. Say why.
+    enforced_by: retrieval gate in code before any model call
+    module: pipeline.py
   - id: G4
-    statement: Eligibility rules are enforced in code, not by the model (Medicare/Medicaid cannot use manufacturer copay cards; PAP income thresholds; Ohio step-therapy law applies to state-regulated plans only).
-    enforced_by: rules engine
+    statement: Eligibility rules are enforced in code, not by the model.
+    enforced_by: rules.py functions, consulted by the verifier and rendered into the answer
+    module: rules.py
   - id: G5
     statement: Store nothing about the person. Card images processed in memory and discarded. Free text screened for PHI and refused.
-    enforced_by: code + PHI detector + eval
+    enforced_by: input guardrail; audit log records the refusal reason but not the text
+    module: guardrails.py
   - id: G6
-    statement: Any option older than 30 days since verification shows a freshness warning.
-    enforced_by: rendering layer
+    statement: Any option whose source is older than the freshness threshold shows a freshness warning.
+    enforced_by: output guardrail
+    module: guardrails.py
   - id: G7
-    statement: Output at roughly an eighth-grade reading level.
-    enforced_by: eval
+    statement: Output at roughly an eighth-grade reading level, in plain language.
+    enforced_by: system prompt + LLM-as-judge score in evals
+    module: verify.py
+  - id: G8
+    statement: Every answer is framed as "what your plan's published policy says", not as a coverage determination or medical advice.
+    enforced_by: output guardrail inserts framing; advice-language check
+    module: guardrails.py
+
+system_prompt_rules: |
+  You are Trailhead Rx, a plain-language guide that explains what a health plan's
+  PUBLISHED POLICY says about getting a specific migraine medicine. You are not a
+  doctor, not the insurance company, and you do not make coverage decisions.
+
+  Hard rules:
+  1. Use ONLY the numbered passages provided. If the passages do not answer part of
+     the question, say "The policy documents I have do not say" for that part.
+     Never fill gaps from general knowledge.
+  2. Every factual statement must cite a passage number in the `citations` field.
+     A statement with no supporting passage must not be made.
+  3. Never recommend a drug, compare how well drugs work, or suggest a dose. If asked,
+     say that is a question for the prescriber.
+  4. Write for a patient at about an eighth-grade reading level: short sentences,
+     everyday words, no jargon without a plain phrase in its place. Health plan
+     policies read like legal documents; your job is to translate, not to echo.
+  5. Do not ask for or repeat any personal or medical details about the patient.
+
+eligibility:
+  # Manufacturer copay cards cannot be used by members of federal programs
+  # (Medicare, Medicaid, TRICARE) under the Anti-Kickback Statute.
+  copay_card_blocked_lobs: [medicare_advantage, medicaid_mco, medicaid_ffs]
+  # Ohio's step-therapy exemption law (ORC 3901.832) applies to state-regulated
+  # plans (fully insured commercial, Marketplace) and Medicaid; it does not apply
+  # to self-funded employer plans (ERISA) or Medicare.
+  ohio_step_therapy_law_lobs: [commercial, marketplace, medicaid_mco, medicaid_ffs]
+  ohio_step_therapy_law_excludes_self_funded: true
+  # Patient assistance programs typically use a federal-poverty-level multiple;
+  # the exact threshold comes from each program record, this is a default.
+  pap_default_fpl_multiple: 4.0

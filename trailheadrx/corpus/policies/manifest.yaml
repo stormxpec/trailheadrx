@@ -1,0 +1,225 @@
+_meta:
+  description: >
+    Ring-one policy corpus for migraine. One entry per governing document.
+    The documents themselves are downloaded to this folder by hand and are
+    NOT committed (public repo, payer terms of use). Fill in url, version,
+    effective_date, and downloaded_on as each document is located.
+  ring: 1
+  category: migraine
+  state: OH
+
+# Field guide
+#   payer            Plan or PBM whose criteria govern
+#   line_of_business commercial | medicaid_mco | medicare_advantage | marketplace | medicaid_ffs
+#   benefit_type     pharmacy | medical
+#   scope            which drugs/classes this document covers
+#   file             local filename once downloaded (kept out of git)
+#   url, version, effective_date, downloaded_on  — fill in
+
+documents:
+
+  # ----- Commercial / PBM criteria (pharmacy benefit; most CGRP agents) -----
+  - payer: Anthem / Elevance (Ohio)
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists (mAbs and gepants) — prior authorization / step therapy criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Anthem / Elevance (Ohio)
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Vyepti (eptinezumab) and Botox for chronic migraine — clinical UM guideline
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Aetna (CVS Health)
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — clinical policy bulletin / formulary exception criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Aetna (CVS Health)
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Botox (chronic migraine) and Vyepti — clinical policy bulletin
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: UnitedHealthcare
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — prior authorization / step therapy (Optum Rx)
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: UnitedHealthcare
+    line_of_business: commercial
+    benefit_type: medical
+    scope: Vyepti and Botox — medical benefit drug policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Cigna (Express Scripts)
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — coverage policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Medical Mutual of Ohio
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — prior authorization criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  # ----- PBM-level criteria (govern many employer plans regardless of carrier) -----
+  - payer: Express Scripts
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — standard PA/step criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: CVS Caremark
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — standard PA/step criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Optum Rx
+    line_of_business: commercial
+    benefit_type: pharmacy
+    scope: CGRP antagonists — standard PA/step criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  # ----- Ohio Medicaid (FFS unified PDL governs the MCOs' pharmacy benefit) -----
+  - payer: Ohio Department of Medicaid — Unified Preferred Drug List
+    line_of_business: medicaid_ffs
+    benefit_type: pharmacy
+    scope: Migraine agents (CGRP, triptans, preventives) — PDL status and PA criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+    note: Ohio's single PBM (Gainwell) administers pharmacy for all Medicaid MCOs; the UPDL is the governing document.
+
+  - payer: CareSource (Ohio Medicaid)
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox and Vyepti — medical benefit policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Molina Healthcare of Ohio
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox and Vyepti — medical benefit policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Buckeye Health Plan (Centene)
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox and Vyepti — medical benefit policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: AmeriHealth Caritas Ohio
+    line_of_business: medicaid_mco
+    benefit_type: medical
+    scope: Botox and Vyepti — medical benefit policy
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  # ----- Medicare Advantage / Part D -----
+  - payer: Humana (Medicare Advantage / Part D, Ohio)
+    line_of_business: medicare_advantage
+    benefit_type: pharmacy
+    scope: CGRP antagonists — Part D PA/step criteria
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: CMS / CGS (Part B MAC for Ohio)
+    line_of_business: medicare_advantage
+    benefit_type: medical
+    scope: Botulinum toxins LCD/billing article (chronic migraine)
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  # ----- Ohio law and appeal references (not payer policy, but cited in layer one) -----
+  - payer: Ohio Revised Code — step therapy exception requirements
+    line_of_business: reference
+    benefit_type: n/a
+    scope: ORC 3901.83 et seq. (step therapy exceptions) — applies to state-regulated plans and Medicaid, not self-funded ERISA plans
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null
+
+  - payer: Ohio Department of Insurance — external review process
+    line_of_business: reference
+    benefit_type: n/a
+    scope: Internal appeal and external review rights and timelines
+    file: null
+    url: null
+    version: null
+    effective_date: null
+    downloaded_on: null

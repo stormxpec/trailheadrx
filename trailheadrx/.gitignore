@@ -33,6 +33,3 @@ build/
 .DS_Store
 .vscode/
 .idea/
-
-# Eval output (regenerated every run)
-evals/last_run.json

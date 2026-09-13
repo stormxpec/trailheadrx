@@ -1,0 +1,35 @@
+# Trailhead Rx configuration. One place for every tunable; nothing model- or
+# path-related is hard-coded elsewhere. FLUENCY.md: "model tiering".
+
+models:
+  # Small, fast tier: routing, extraction, LLM-as-judge.
+  small: claude-haiku-4-5
+  # Strong tier: drafting and synthesis.
+  strong: claude-sonnet-5
+  # Local embedding model for retrieval (runs on the laptop; no API key).
+  embedding: sentence-transformers/all-MiniLM-L6-v2
+  max_output_tokens: 4000
+
+paths:
+  policies_manifest: corpus/policies/manifest.yaml
+  policies_dir: corpus/policies
+  programs_manifest: corpus/programs/manifest.yaml
+  drugs: data/drugs_migraine.yaml
+  rules: governance/rules.yaml
+  index_db: index/trailheadrx.sqlite
+  audit_dir: governance/audit
+
+chunking:
+  target_words: 260        # aim for chunks this long
+  max_words: 420           # hard cap; long sections are split
+  overlap_words: 40        # carried from the end of one chunk into the next
+
+retrieval:
+  top_k: 8                 # chunks placed in the context packet
+  candidates: 30           # taken from each of keyword and semantic search before fusion
+  rrf_k: 60                # reciprocal-rank-fusion constant
+
+thresholds:
+  plan_match_min_confidence: 0.6
+  freshness_days: 30
+  max_revisions: 2         # draft → verify → revise loop limit
