@@ -205,9 +205,24 @@ def answer(question: str, payer: str, line_of_business: str, drug: str, self_fun
         return Answer("blocked", ogate.reason, trace_id=trace.id, dry_run=dry)
 
     elig = [asdict(d) for d in eligibility_summary(line_of_business, self_funded)]
-    cites = [c.citation() for c in packet.chunks]
+    cites, remap = _dedupe_sources([c.citation() for c in packet.chunks])
+    for c in final["claims"] + pruned:
+        c["citations"] = sorted({remap[n] for n in c.get("citations", []) if n in remap})
     trace.finish("answered", claims=len(final["claims"]))
     return Answer("answered", "", final.get("summary", ""), final["claims"], final.get("not_in_documents", []),
                   elig, cites, final.get("warnings", []), final.get("framing", ""), qtype, trace.id, dry,
                   wait_estimate=final.get("wait_estimate"), other_routes=other_routes(drug, line_of_business),
                   drug=(packet.drug or {}).get("brand", drug), left_out=pruned)
+
+
+def _dedupe_sources(passage_cites: list[str]) -> tuple[list[str], dict[int, int]]:
+    """Several passages often come from the same page of the same document.
+    The model cites passages (1..8, as in the trace); the reader sees sources,
+    one per distinct page. Returns (sources, passage number -> source number)."""
+    sources: list[str] = []
+    remap: dict[int, int] = {}
+    for i, c in enumerate(passage_cites, start=1):
+        if c not in sources:
+            sources.append(c)
+        remap[i] = sources.index(c) + 1
+    return sources, remap

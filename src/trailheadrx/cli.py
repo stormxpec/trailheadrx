@@ -1,8 +1,9 @@
-"""Command line. Three verbs:
+"""Command line. Four verbs:
 
   python -m trailheadrx ingest [--rebuild]      index every downloaded document
   python -m trailheadrx ask --payer ... --lob ... --drug ... "question"
   python -m trailheadrx status                   what is indexed, dry-run or live
+  python -m trailheadrx trace [id]               why the verifier kept or dropped each claim
 
 Run from the repo root with the virtual environment active.
 """
@@ -34,6 +35,9 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("status", help="index summary and mode")
 
+    s = sub.add_parser("trace", help="show why the verifier kept or dropped each claim (latest answer, or a trace id)")
+    s.add_argument("trace_id", nargs="?", help="12-character reference from the answer page; default: the latest")
+
     a = p.parse_args(argv)
 
     if a.cmd == "ingest":
@@ -50,6 +54,34 @@ def main(argv: list[str] | None = None) -> int:
             print("index: empty — run `python -m trailheadrx ingest`")
         for r in rows:
             print(f"  {r['chunks']:4d} chunks  {r['payer']}  [{r['line_of_business']}/{r['benefit_type']}]  {r['file']}")
+        return 0
+
+    if a.cmd == "trace":
+        from .audit import read_all
+        recs = read_all()
+        rec = next((r for r in reversed(recs) if r.get("id") == a.trace_id), None) if a.trace_id else (recs[-1] if recs else None)
+        if not rec:
+            print("no trace found"); return 1
+        print(f"trace {rec['id']}  outcome={rec.get('outcome')}  cost=${rec.get('total_cost_usd', 0):.4f}")
+        for st in rec.get("stages", []):
+            name = st.get("stage", "")
+            if name == "plan_match":
+                print(f"\nplan match: confidence {st.get('confidence')} — {st.get('reason')}")
+            elif name == "retrieval":
+                for c in st.get("packet", []) or []:
+                    print(f"  [{c['n']}] kw={c.get('keyword_rank') or '-'} sem={c.get('semantic_rank') or '-'} {c['citation'][:90]} | {c.get('section', '')[:40]}")
+            elif name.startswith("verify"):
+                print(f"\n{name}: {'passed' if st.get('passed') else 'DID NOT PASS'}")
+                for n in st.get("notes", []):
+                    print(f"  note: {n}")
+                for pc in st.get("per_claim", []):
+                    flag = "DROPPED" if pc.get("failed") else "kept   "
+                    print(f"  {flag} claim {pc['claim']} cites={pc.get('citations')} overlap={pc.get('overlap')} judge={pc.get('judge', '-')}")
+                    print(f"          {pc.get('text', '')[:140]}")
+                    if pc.get("judge") not in (None, "SUPPORTED", "-") and pc.get("judge_reason"):
+                        print(f"          judge: {pc['judge_reason'][:200]}")
+            elif name.startswith("prune"):
+                print(f"  pruned {st.get('dropped')}, kept {st.get('kept')}")
         return 0
 
     if a.cmd == "ask":

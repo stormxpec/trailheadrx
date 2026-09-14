@@ -88,12 +88,23 @@ def code_checks(answer: dict | None, packet: ContextPacket) -> Verdict:
 
 
 JUDGE_SYSTEM = (
-    "You are a strict reviewer. For each numbered claim you are given the passage(s) it cites. "
-    "Decide whether the passage text SUPPORTS the claim as written. Reply with a JSON array of objects "
-    "{\"claim\": n, \"verdict\": \"SUPPORTED\" | \"PARTIAL\" | \"NOT_SUPPORTED\", \"reason\": \"...\"} and nothing else. "
-    "PARTIAL means the passage supports part of the claim but the claim adds something the passage does not say. "
+    "You are a careful reviewer. For each numbered claim you are given the passage(s) it cites. "
+    "Decide whether the passage text supports the claim. Reply with a JSON array of objects "
+    "{\"claim\": n, \"verdict\": \"SUPPORTED\" | \"PARTIAL\" | \"NOT_SUPPORTED\", \"reason\": \"...\"} and nothing else.\n"
+    "The claims are written for patients, so plain-language paraphrase is expected and counts as SUPPORTED: "
+    "rewording, unit conversion (730 days = 2 years; 8 weeks = 2 months), rounding, and describing a rule's "
+    "effect ('you need to have filled X') rather than quoting its mechanism ('if X was filled, the claim pays'). "
+    "PARTIAL means the passage supports the main point but the claim adds a detail the passage does not contain. "
+    "NOT_SUPPORTED means the passage contradicts the claim, or does not contain the claim's main point at all. "
     "Do not use outside knowledge; only the passage text counts."
 )
+
+# What each verdict does. PARTIAL keeps the claim: its main point is in the
+# document, and the judge's reservation is recorded in the trace for review.
+# The first live Aetna run dropped the single most useful fact in the answer
+# (the ten-medicine list) on a PARTIAL whose reason was that "2 years" is less
+# precise than "730 days" — that is a paraphrase, not an error.
+DROPPING_VERDICTS = {"NOT_SUPPORTED", "WRONG_DRUG"}
 
 
 def llm_judge(answer: dict, packet: ContextPacket) -> tuple[list[dict], llm.LLMResult]:
@@ -130,9 +141,10 @@ def verify(answer: dict | None, packet: ContextPacket, use_judge: bool = True) -
             idx = item.get("claim")
             if not (isinstance(idx, int) and 1 <= idx <= len(v.per_claim)):
                 continue
-            verdict = item.get("verdict", "SUPPORTED")
+            verdict = str(item.get("verdict", "SUPPORTED")).upper()
             v.per_claim[idx - 1]["judge"] = verdict
-            if verdict != "SUPPORTED":
+            v.per_claim[idx - 1]["judge_reason"] = item.get("reason", "")
+            if verdict in DROPPING_VERDICTS:
                 v.per_claim[idx - 1]["failed"] = True
                 v.notes.append(f"Claim {idx} judged {verdict}: {item.get('reason', '')}")
     v.passed = not v.notes

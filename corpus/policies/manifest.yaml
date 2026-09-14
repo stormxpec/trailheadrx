@@ -72,13 +72,13 @@ documents:
     benefit_type: pharmacy
     scope: Aimovig, Ajovy, Emgality, Vyepti — injectable/IV CGRP
     title: CGRP Receptor Antagonists Inj, IV — ST with Limit, Post PA
-    policy_id: "2761-E, 3155-E (UDR 06-2024)"
-    url: https://www.aetna.com/products/rxnonmedicare/data/2023/CGRP_Receptor_Antagonists_Inj,_IV_ST_with_Limit,_Post_PA_Policy_2761-E,_3155-E_UDR_06-2023.html
-    effective_or_reviewed: "06-2023 version fetched; 06-2024 URL returned 404 — look for newer on the Pharmacy CPB index"
-    st_note: 8-week trial of at least ONE class (AED, beta-blocker, or antidepressant) unless intolerance/contraindication. Notably lighter than UHC.
+    policy_id: "2761-E, 3155-E"
+    url: https://www.aetna.com/products/rxnonmedicare/data/2025%20commercial/CGRP_Receptor_Antagonists_Inj,_IV_ST_with_Limit,_Post_PA_Policy_2761-E,_3155-E_UDR_06-2024.html
+    effective_or_reviewed: "UDR 06-2024 (2024-06-01)"
+    st_note: ST — >=56-day fill of one of twelve preventives (AEDs, beta-blockers, candesartan, amitriptyline, venlafaxine) in past 730 days, checked against Caremark claims. PA — 8-week trial failure or intolerance. Notably lighter than UHC. The 06-2023 version (data/2023/...UDR_06-2023.html) lacked valproic acid and candesartan.
     status: found
-    file: aetna-cgrp-injectable-2761e.html
-    downloaded_on: "2026-09-13"
+    file: aetna-cgrp-injectable-2761e-udr2024.html
+    downloaded_on: "2026-09-14"
     alt_url: https://www.aetna.com/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins.html
 
   - payer: Aetna (CVS Caremark criteria)
@@ -86,9 +86,9 @@ documents:
     benefit_type: pharmacy
     scope: Nurtec ODT, Qulipta, Ubrelvy, Zavzpret — oral/nasal CGRP
     title: CGRP Receptor Antagonists Oral, Nasal — ST with Limit, Post PA
-    policy_id: "3481-E (UDR 06-2024)"
+    policy_id: "3481-E"
     url: https://www.aetna.com/products/rxnonmedicare/data/2025%20commercial/CGRP_Receptor_Antagonists_Oral,_Nasal_ST_with_Limit,_Post_PA_Policy_3481-E_UDR_06-2024.html
-    effective_or_reviewed: "UDR 06-2024"
+    effective_or_reviewed: "UDR 06-2024 (2024-06-01)"
     st_note: Prevention (Nurtec/Qulipta) — >=56-day supply of one standard preventive in past 730 days. Acute (Nurtec/Ubrelvy/Zavzpret) — inadequate response/intolerance to TWO triptans or contraindication.
     status: found
     file: aetna-cgrp-oral-nasal-3481e.html

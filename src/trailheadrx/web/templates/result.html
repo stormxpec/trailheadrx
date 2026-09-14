@@ -21,23 +21,34 @@
     {% if wait_text %}<p class="muted" style="font-size:16px;margin-bottom:0">{{ wait_text }}</p>{% endif %}
   </div>
 
+  <p class="small muted">Open a heading to read that part. Sections with a number in brackets are backed by your plan's own documents, listed at the end.</p>
   {% for title, group in sections %}
-  <h2>{{ title }}</h2>
-  <div class="card"><ul>{% for c in group %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul></div>
+  <details class="sec"{% if loop.first %} open{% endif %}>
+    <summary><h2>{{ title }}</h2><span class="count">{{ group|length }}</span></summary>
+    <div class="card"><ul>{% for c in group %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul></div>
+  </details>
   {% endfor %}
 
   {% if a.other_routes %}
-  <h2>Other ways to get it</h2>
-  <div class="card"><ul>{% for r in a.other_routes %}<li>{{ r }}</li>{% endfor %}</ul></div>
+  <details class="sec" open>
+    <summary><h2>Other ways to get it — often quicker, with a different cost picture</h2><span class="count">{{ a.other_routes|length }}</span></summary>
+    <div class="card">
+      <p class="small muted" style="margin-top:0">These come from the drug maker, not your plan: a free first fill while you wait, a savings card once approved, buying direct and skipping the plan, or free medicine if income qualifies. Each is faster or cheaper in a different way, and each has a trade-off noted beside it.</p>
+      <ul>{% for r in a.other_routes %}<li>{{ r }}</li>{% endfor %}</ul>
+    </div>
+  </details>
   {% endif %}
 
   {% if a.eligibility %}
-  <h2>Good to know for your kind of plan</h2>
-  <div class="card"><ul>{% for e in a.eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
+  <details class="sec">
+    <summary><h2>Good to know for your kind of plan</h2><span class="count">{{ a.eligibility|length }}</span></summary>
+    <div class="card"><ul>{% for e in a.eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
+  </details>
   {% endif %}
 
   {% if table and table[1] %}
-  <h2>How your plan treats the other medicines in this class</h2>
+  <details class="sec" open>
+    <summary><h2>How your plan treats the other medicines in this class</h2></summary>
   <div class="card">
     <p class="small muted" style="margin-top:0">This compares the paperwork and waiting, not the medicines themselves. Which one is right for you is your doctor's call; how hard your plan makes each one is worth knowing before that conversation.</p>
     <table>
@@ -58,32 +69,43 @@
       {% endfor %}
     </table>
   </div>
+  </details>
   {% endif %}
 
   {% if a.not_in_documents %}
-  <h2>Your plan's documents don't say</h2>
-  <div class="card"><ul>{% for x in a.not_in_documents %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  <details class="sec">
+    <summary><h2>Your plan's documents don't say</h2><span class="count">{{ a.not_in_documents|length }}</span></summary>
+    <div class="card"><ul>{% for x in a.not_in_documents %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  </details>
   {% endif %}
 
   {% if a.left_out %}
-  <h2>What we left out, and why</h2>
+  <details class="sec">
+    <summary><h2>What we left out, and why</h2><span class="count">{{ a.left_out|length }}</span></summary>
   <div class="card">
     <p class="small muted" style="margin-top:0">Everything above is backed by a page of your plan's documents you can check. {% if a.left_out|length == 1 %}One more statement{% else %}{{ a.left_out|length }} more statements{% endif %} could not be matched to the documents closely enough to stand behind, so {% if a.left_out|length == 1 %}it is{% else %}they are{% endif %} listed here as unconfirmed. Nothing above depends on {% if a.left_out|length == 1 %}it{% else %}them{% endif %}; if one matters to you, it is a good question for your doctor's office.</p>
     <ul>{% for c in a.left_out %}<li><span class="pill">unconfirmed</span> {{ c.text }}</li>{% endfor %}</ul>
   </div>
+  </details>
   {% endif %}
 
   {% if a.warnings %}
-  <h2>One more thing</h2>
-  <div class="card note"><ul>{% for w in a.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+  <details class="sec">
+    <summary><h2>One more thing</h2><span class="count">{{ a.warnings|length }}</span></summary>
+    <div class="card note"><ul>{% for w in a.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+  </details>
   {% endif %}
 
-  <h2>How to use this</h2>
+  <details class="sec">
+    <summary><h2>How to use this</h2></summary>
   <div class="card"><p style="margin:0">This is a plain-words reading of your health plan's own published rules. It is not the final word on your case, and it is not medical advice. Think of it as a map for the conversation with your doctor's office and your health plan: it tells you what they will ask for, how long it may take, and where you have room to push. That is also why we show things like how the same plan treats people in other states, and faster ways to get the medicine your doctor thinks is right for you. Your doctor's office sends in the request; your health plan makes the decision; you can ask questions and ask for exceptions at every step.</p></div>
+  </details>
 
   {% if a.citations %}
-  <h2>Where this comes from</h2>
-  <div class="card"><ol class="sources">{% for c in a.citations %}<li>{{ c }}</li>{% endfor %}</ol></div>
+  <details class="sec">
+    <summary><h2>Where this comes from</h2><span class="count">{{ a.citations|length }}</span></summary>
+    <div class="card"><ol class="sources">{% for c in a.citations %}<li>{{ c }}</li>{% endfor %}</ol></div>
+  </details>
   {% endif %}
   <p class="actions"><a class="btn" href="/">Ask another question</a> <a class="btn secondary" href="/leave">Close and sign out</a></p>
 {% endif %}
@@ -92,7 +114,7 @@
 <details>
   <summary>How this answer was built</summary>
   <div class="card">
-    <p class="small muted" style="margin-top:0">The same record the audit log keeps. Reference <span class="mono">{{ trace.id }}</span>{% if a.dry_run %} · dry run (no model was called){% endif %}.</p>
+    <p class="small muted" style="margin-top:0">The same record the audit log keeps. Passage numbers here are the eight retrieved passages; the answer above numbers distinct sources instead. Reference <span class="mono">{{ trace.id }}</span>{% if a.dry_run %} · dry run (no model was called){% endif %}.</p>
     {% for st in trace.stages %}
       {% if st.stage == "plan_match" %}
         <h2>Plan match</h2>
@@ -114,10 +136,10 @@
         {% if st.notes %}<ul class="small">{% for n in st.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
         {% if st.per_claim %}
         <table>
-          <tr><th>Claim</th><th>Cites</th><th>Overlap</th><th>Judge</th></tr>
+          <tr><th>Claim</th><th>Passages</th><th>Overlap</th><th>Judge</th></tr>
           {% for pc in st.per_claim %}
           <tr><td class="small">{{ pc.text }}</td><td>{{ pc.citations|join(", ") }}</td><td>{{ pc.overlap if pc.overlap is defined else "—" }}</td>
-              <td>{% if pc.judge %}<span class="pill {{ 'ok' if pc.judge == 'SUPPORTED' else 'no' }}">{{ pc.judge|lower|replace('_', ' ') }}</span>{% elif pc.failed %}<span class="pill no">failed code check</span>{% else %}—{% endif %}</td></tr>
+              <td>{% if pc.judge %}<span class="pill {{ 'ok' if pc.judge == 'SUPPORTED' else ('no' if pc.failed else '') }}">{{ pc.judge|lower|replace('_', ' ') }}</span>{% if pc.judge != 'SUPPORTED' and pc.judge_reason %}<br><small class="muted">{{ pc.judge_reason }}</small>{% endif %}{% elif pc.failed %}<span class="pill no">failed code check</span>{% else %}—{% endif %}</td></tr>
           {% endfor %}
         </table>
         {% endif %}

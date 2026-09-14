@@ -179,9 +179,13 @@ class RetrievedChunk:
     semantic_rank: int | None
 
     def citation(self) -> str:
-        pages = f"p. {self.page_start}" if self.page_start == self.page_end else f"pp. {self.page_start}-{self.page_end}"
+        # A web page has no page numbers; its section heading is the locator.
+        if str(self.file or "").endswith(".html") and self.page_start == self.page_end == 1:
+            where = f"section: {self.section}" if self.section and self.section != "Start" else "web page"
+        else:
+            where = f"p. {self.page_start}" if self.page_start == self.page_end else f"pp. {self.page_start}-{self.page_end}"
         pid = f" ({self.policy_id})" if self.policy_id else ""
-        return f"{self.payer} — {self.title}{pid}, {self.effective_or_reviewed}, {pages}"
+        return f"{self.payer} — {self.title}{pid}, {self.effective_or_reviewed}, {where}"
 
 
 def _fts_query(question: str, drug: str) -> str:
