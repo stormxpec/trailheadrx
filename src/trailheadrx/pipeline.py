@@ -30,6 +30,18 @@ HOW_TO_USE = (
     "makes the decision; you can ask questions and ask for exceptions at every step."
 )
 
+# Everyday headings for the answer, and which claim topics fall under each.
+# Shared by the CLI rendering below and the web page (web/app.py).
+SECTION_HEADINGS = [
+    ("What you need to try first", {"step_therapy", "trial_definition"}),
+    ("What your doctor needs to show", {"prior_authorization", "documentation", "prescriber", "diagnosis_requirements"}),
+    ("Who gets an easier path", {"variation"}),
+    ("Once you're approved", {"initial_approval_period", "reauthorization", "quantity_or_dose_limits", "exclusions_or_combinations"}),
+    ("Timing and appeals", {"timeline", "appeal"}),
+    ("Also worth knowing", {"other"}),
+]
+
+
 @dataclass
 class Answer:
     outcome: str                      # answered | abstained | refused | blocked
@@ -62,14 +74,7 @@ class Answer:
             lines.append(f"\n(ref {self.trace_id}{'; dry run' if self.dry_run else ''})")
             return "\n".join(lines)
 
-        headings = [
-            ("What you need to try first", {"step_therapy", "trial_definition"}),
-            ("What your doctor needs to show", {"prior_authorization", "documentation", "prescriber", "diagnosis_requirements"}),
-            ("Who gets an easier path", {"variation"}),
-            ("Once you're approved", {"initial_approval_period", "reauthorization", "quantity_or_dose_limits", "exclusions_or_combinations"}),
-            ("Timing and appeals", {"timeline", "appeal"}),
-            ("Also worth knowing", {"other"}),
-        ]
+        headings = SECTION_HEADINGS
         def cite(c):
             return "  " + "".join(f"[{n}]" for n in c.get("citations", []))
 
@@ -129,7 +134,7 @@ def answer(question: str, payer: str, line_of_business: str, drug: str, self_fun
     trace.stage("input_guardrails", passed=True)
 
     # 2–3. Plan match + retrieval → context packet
-    packet = build_packet(question, payer, line_of_business, drug, rules_text())
+    packet = build_packet(question, payer, line_of_business, drug, rules_text(), self_funded)
     pm = packet.plan_match
     trace.stage("plan_match", confidence=pm.confidence, reason=pm.reason,
                 documents=[d.get("title") or d.get("payer") for d in pm.documents], indexed=pm.indexed_files)

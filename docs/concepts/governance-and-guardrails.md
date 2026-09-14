@@ -17,3 +17,14 @@
 *Evals — `evals/`.* Seventeen golden scenarios across abstention, PHI refusal, scope refusal, eligibility, and groundedness. `make eval` prints a scorecard by category and writes `evals/last_run.json`.
 
 **What the evals caught on day one.** The first run failed two scenarios: the audit log was recording the refused question (so PHI leaked into the trace), and the Ohio law rule hedged about self-funding for a Medicaid member. Both were fixed in `pipeline.py` and `rules.py`, and the unit test was tightened to check the whole trace record. That is the loop working as designed.
+
+## Governance at the edge (session 4)
+
+When the pipeline runs as a website, three more gates sit in front of it, all in `src/trailheadrx/web/gate.py`, all ordinary code with tests:
+
+- **Access code.** One shared phrase from `.env`. A correct entry sets a cookie holding an HMAC signature — not the code — so changing the code logs everyone out. Wrong entries are counted per visitor and locked after ten in an hour; the text typed is never written anywhere.
+- **Rate limit.** Questions per visitor (by IP) per hour, in memory. `config.yaml → web.rate_limit_per_hour`.
+- **Spend cap.** The audit trace already records an estimated cost for every model call. The gate sums today's records, adds a reservation for answers still running, and refuses new questions above `web.daily_spend_cap_usd`. In dry-run mode the cap never bites because nothing costs anything.
+
+Order matters: cookie → rate limit → spend cap → input guardrails → queue. A question that would be refused for PHI is refused before it spends a worker, and the pipeline runs the same guardrails again on its own — the site never relies on the edge alone.
+

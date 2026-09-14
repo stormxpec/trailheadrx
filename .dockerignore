@@ -1,0 +1,10 @@
+.venv
+.env
+index/
+governance/audit/
+corpus/policies/*
+!corpus/policies/manifest.yaml
+corpus/programs/*
+!corpus/programs/manifest.yaml
+__pycache__
+.git

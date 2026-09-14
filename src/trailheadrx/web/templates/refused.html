@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>We can't take that question as written</h1>
+<div class="card note">{{ reason }}</div>
+{% if eligibility %}
+<h2>Good to know for your kind of plan</h2>
+<div class="card"><ul>{% for e in eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
+{% endif %}
+<p class="actions"><a class="btn" href="/">Ask another way</a> <a class="btn secondary" href="/leave">Close and sign out</a></p>
+{% endblock %}

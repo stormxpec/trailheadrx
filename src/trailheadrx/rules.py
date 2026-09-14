@@ -63,9 +63,10 @@ def ohio_step_therapy_law_applies(line_of_business: str, self_funded: bool | Non
         self_funded = False
     if e["ohio_step_therapy_law_excludes_self_funded"] and self_funded:
         return Decision(False, "G4",
-                        "Your employer plan appears to be self-funded, which puts it under federal rather than "
-                        "Ohio rules, so Ohio's step-therapy law does not apply. Your plan may still have its "
-                        "own way to ask for an exception.")
+                        "Your employer plan is self-funded, so it follows federal law (ERISA) rather than Ohio "
+                        "insurance law. Ohio's step-therapy exemption law does not apply to it. Federal rules "
+                        "still guarantee you an internal appeal with set deadlines and, for most plans, an "
+                        "independent outside review; your plan may also have its own way to ask for an exception.")
     if e["ohio_step_therapy_law_excludes_self_funded"] and self_funded is None:
         return Decision(True, "G4",
                         "Ohio law likely gives you the right to ask your health plan to skip these steps — for "

@@ -135,13 +135,17 @@ def plan_match(payer: str, line_of_business: str, drug: str, conn: sqlite3.Conne
 
     if not candidates:
         pm.confidence = 0.0
-        pm.reason = f"No governing document for {payer} / {line_of_business} / {drug} is in the corpus."
+        pm.reason = (f"We don't have {payer}'s rules for {drug} on file yet for this kind of plan. "
+                     f"We are adding plans steadily — please check back.")
     elif all(d.get("status") in ("not_public", "landing_only") for d in candidates):
         pm.confidence = 0.1
-        pm.reason = f"{payer} does not publish its criteria for this benefit; only a landing page is known."
+        pm.reason = (f"{payer} does not publish its rules for {drug} where the public can read them, so we cannot "
+                     f"show you what they say. Your plan must give you its criteria if you ask; the member "
+                     f"services number on your card is the place to start.")
     elif not pm.indexed_files:
         pm.confidence = 0.3
-        pm.reason = "A governing document is listed but has not been downloaded and indexed yet."
+        pm.reason = (f"{payer} publishes its rules for {drug}, and we know where they are, but we have not loaded "
+                     f"that document yet. We will add it — please check back soon.")
     else:
         pm.confidence = 0.9
         pm.reason = f"{len(pm.indexed_files)} indexed document(s) govern this payer/drug pair."
@@ -305,28 +309,36 @@ APPEAL_CUES = re.compile(r"\b(appeal|appeals|denied|denial|exception|exemption|e
 STATE_REGULATED = {"commercial", "marketplace", "medicaid_mco", "medicaid_ffs"}
 
 
-def add_reference_docs(question: str, pm: PlanMatch, conn: sqlite3.Connection) -> None:
-    """When the question is about appeals or exceptions, pull the Ohio law and
-    ODI appeal pages into the retrieval set so the answer can cite them.
-    They are `line_of_business: reference` rows in the manifest: not payer
-    policy, so they never affect plan-match confidence — they only add
-    passages the model may cite."""
-    if not APPEAL_CUES.search(question) or pm.line_of_business not in STATE_REGULATED:
+def add_reference_docs(question: str, pm: PlanMatch, conn: sqlite3.Connection, self_funded: bool | None = None) -> None:
+    """When the question is about appeals or exceptions, pull the law pages
+    into the retrieval set so the answer can cite them. Which law depends on
+    who regulates the plan: Ohio (ORC 3901.832, Chapter 3922) for
+    state-regulated plans; federal ERISA/ACA rules for self-funded employer
+    plans, which Ohio insurance law does not reach. Reference rows never
+    affect plan-match confidence — they only add passages the model may cite."""
+    if not APPEAL_CUES.search(question):
         return
+    if pm.line_of_business in ("commercial", "marketplace") and self_funded is True:
+        lob = "reference_federal"
+    elif pm.line_of_business in STATE_REGULATED:
+        lob = "reference"
+    else:
+        return   # Medicare Advantage appeals run through CMS; not covered yet
     rows = conn.execute("SELECT payer, line_of_business, benefit_type, scope, title, policy_id, url, "
                         "effective_or_reviewed, file, downloaded_on, status FROM documents "
-                        "WHERE line_of_business='reference'").fetchall()
+                        "WHERE line_of_business=?", (lob,)).fetchall()
     for r in rows:
         if r["file"] not in pm.indexed_files:
             pm.documents.append(dict(r))
             pm.indexed_files.append(r["file"])
 
 
-def build_packet(question: str, payer: str, line_of_business: str, drug: str, rules_excerpt: str) -> ContextPacket:
+def build_packet(question: str, payer: str, line_of_business: str, drug: str, rules_excerpt: str,
+                 self_funded: bool | None = None) -> ContextPacket:
     conn = open_db()
     pm = plan_match(payer, line_of_business, drug, conn)
     if pm.confidence >= config.CONFIG["thresholds"]["plan_match_min_confidence"]:
-        add_reference_docs(question, pm, conn)
+        add_reference_docs(question, pm, conn, self_funded)
     chunks = hybrid_retrieve(question, pm, conn) if pm.confidence >= config.CONFIG["thresholds"]["plan_match_min_confidence"] else []
     conn.close()
     return ContextPacket(question, resolve_drug(drug), pm, chunks, rules_excerpt)

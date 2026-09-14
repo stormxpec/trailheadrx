@@ -106,3 +106,12 @@ def test_freshness_skips_statutes(indexed):
     assert any(c.line_of_business == "reference" for c in pkt.chunks)
     assert not any("FIXTURE — External review" in w for w in freshness_warnings(pkt.chunks))
 
+
+def test_self_funded_plans_get_federal_not_ohio_references(indexed):
+    from trailheadrx.retrieve import build_packet
+    q = "My plan denied Emgality. How do I appeal?"
+    state = build_packet(q, "UnitedHealthcare", "commercial", "Emgality", "", self_funded=False)
+    assert any(c.line_of_business == "reference" for c in state.chunks)
+    erisa = build_packet(q, "UnitedHealthcare", "commercial", "Emgality", "", self_funded=True)
+    assert not any(c.line_of_business == "reference" for c in erisa.chunks)   # Ohio law does not reach ERISA plans
+

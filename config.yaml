@@ -36,3 +36,9 @@ thresholds:
   plan_match_min_confidence: 0.6
   freshness_days: 30
   max_revisions: 2         # draft → verify → revise loop limit
+
+web:                       # session 4: the form in front of the pipeline
+  rate_limit_per_hour: 10  # questions per visitor (by IP) per hour
+  daily_spend_cap_usd: 5.0 # estimated Anthropic spend per UTC day; the site refuses new questions above this
+  job_workers: 2           # answers computed at once; the rest queue
+  job_ttl_minutes: 60      # finished answers are kept in memory this long, then dropped (nothing is written)

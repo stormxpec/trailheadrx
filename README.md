@@ -11,7 +11,7 @@ Trailhead Rx is also a learning project. It is built to exercise three ideas in 
 
 ## Status
 
-Session three: both layers run end to end from the command line. Layer 1 (what your plan says) — ingest → hybrid retrieval → prompt builder → model → verifier → output guardrails → audit log — answers in plain language with a wait estimate, a class comparison table (`--compare-class`), and, for appeal questions, citations to Ohio law (ORC 3901.832 step-therapy exemption, ORC Chapter 3922 external review). Layer 2 (other ways to get it) renders verified manufacturer program records from `corpus/programs/manifest.yaml` with rules-as-code eligibility, so a Medicare member is told the copay card is off-limits and why. 17 unit tests, 17 eval scenarios. The form UI and hosting are session 4/5.
+Session four: the website. A form (`src/trailheadrx/web/`) sits in front of the same pipeline the CLI runs, behind a shared access code, with a per-visitor rate limit, a daily spend cap computed from the audit trace, and input guardrails that refuse before anything is queued. Answers run in the background and the page refreshes itself until one is ready; each answer carries a collapsed "How this answer was built" panel (plan match, the passages retrieved with their keyword/semantic/fused ranks, the verifier's per-claim verdicts, model calls and cost). No JavaScript; nothing typed is stored beyond the audit trace, which never holds a refused question. Layer 1 and Layer 2 are as in session three. 24 unit tests, 17 eval scenarios. Hosting (Fly.io/Render, the domain) is session 5.
 
 ## Run it
 
@@ -28,6 +28,8 @@ curl -sSL -o ohio-orc-3901-832.html https://codes.ohio.gov/ohio-revised-code/sec
 curl -sSL -o ohio-orc-3922-02.html  https://codes.ohio.gov/ohio-revised-code/section-3922.02
 curl -sSL -o ohio-orc-3922-08.html  https://codes.ohio.gov/ohio-revised-code/section-3922.08
 curl -sSL -o ohio-orc-3922-09.html  https://codes.ohio.gov/ohio-revised-code/section-3922.09
+curl -sSL -o ecfr-29-2560-503-1.html "https://www.ecfr.gov/api/renderer/v1/content/enhanced/current/title-29?section=2560.503-1"
+curl -sSL -o ecfr-45-147-136.html "https://www.ecfr.gov/api/renderer/v1/content/enhanced/current/title-45?section=147.136"
 cd ../..
 
 # index the documents in corpus/policies/
@@ -54,6 +56,17 @@ PYTHONPATH=src python3 evals/run.py
 Without an API key the app runs in **dry-run** mode: every model call returns a labeled stand-in, so ingestion, retrieval, guardrails, verification, and logging all work and can be tested for free. Answers in dry-run are marked and never meant for a patient.
 
 `make ingest`, `make status`, `make test`, `make eval` are shortcuts for the above.
+
+## Run the website
+
+```bash
+# add two lines to .env (see .env.example): the access code testers type, and a secret that signs the cookie
+export $(cat .env | xargs)
+PYTHONPATH=src python3 -m uvicorn trailheadrx.web.app:app --reload --port 8000     # or: make web
+# open http://127.0.0.1:8000
+```
+
+The site's own governance lives in `config.yaml` under `web:` — questions per visitor per hour, the daily spend cap in dollars, how many answers run at once. When the cap is reached the site says so and stops calling the model until the next UTC day. `Dockerfile` builds the same thing for hosting; the corpus documents and the index are built on the host, never in the image.
 
 ## Layout
 
@@ -86,6 +99,7 @@ src/trailheadrx/     the application — see "Which file is which box" below
 | Tracing | `audit.py` | audit log |
 | Evals | `evals/run.py` + `evals/scenarios.yaml` | golden set, regression |
 | The whole request path | `pipeline.py` | chain |
+| The form, access code, rate limit, spend cap | `web/app.py`, `web/gate.py`, `web/jobs.py` | guardrails at the edge, background jobs |
 
 ## Not in this repo
 

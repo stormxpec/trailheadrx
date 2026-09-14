@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ a.drug or job.request.drug }} · {{ job.request.payer }} — Trailhead Rx{% endblock %}
+{% block body %}
+{% macro cites(c) %}{% if c.citations %}<span class="cite">{% for n in c.citations %}[{{ n }}]{% endfor %}</span>{% endif %}{% endmacro %}
+
+<p class="small muted">{{ job.request.payer }} · {{ job.request.lob.replace('_', ' ') }} · {{ job.request.drug }}</p>
+
+{% if a.outcome != "answered" %}
+  <h1>{% if a.outcome == "refused" %}We can't take that question as written{% else %}We can't answer this one yet{% endif %}</h1>
+  <div class="card note">{{ a.reason }}</div>
+  {% if a.eligibility %}
+  <h2>Good to know for your kind of plan</h2>
+  <div class="card"><ul>{% for e in a.eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  <p class="actions"><a class="btn" href="/">Try another plan or question</a> <a class="btn secondary" href="/leave">Close and sign out</a></p>
+{% else %}
+  <h1>{{ job.request.drug }} and your plan</h1>
+  <h2>The short version</h2>
+  <div class="card short">
+    <p style="margin-top:0">{{ a.summary }}</p>
+    {% if wait_text %}<p class="muted" style="font-size:16px;margin-bottom:0">{{ wait_text }}</p>{% endif %}
+  </div>
+
+  {% for title, group in sections %}
+  <h2>{{ title }}</h2>
+  <div class="card"><ul>{% for c in group %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul></div>
+  {% endfor %}
+
+  {% if a.other_routes %}
+  <h2>Other ways to get it</h2>
+  <div class="card"><ul>{% for r in a.other_routes %}<li>{{ r }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if a.eligibility %}
+  <h2>Good to know for your kind of plan</h2>
+  <div class="card"><ul>{% for e in a.eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if table and table[1] %}
+  <h2>How your plan treats the other medicines in this class</h2>
+  <div class="card">
+    <p class="small muted" style="margin-top:0">This compares the paperwork and waiting, not the medicines themselves. Which one is right for you is your doctor's call; how hard your plan makes each one is worth knowing before that conversation.</p>
+    <table>
+      <tr><th></th><th>Medicine</th><th>Approval</th><th>Try first</th><th>Wait from zero</th><th>Source</th></tr>
+      {% for r in table[1] %}
+      <tr>
+        <td>{% if r.drug.split()[0]|lower == job.request.drug.split()[0]|lower %}<span class="arrow">→</span>{% endif %}</td>
+        <td><strong>{{ r.drug }}</strong></td>
+        {% if r.status == "ok" %}
+        <td>{% if r.approval_required is true %}needed{% elif r.approval_required is false %}not needed{% else %}not stated{% endif %}</td>
+        <td>{{ r.must_try_first }}{% if r.trial_length %} <span class="muted">({{ r.trial_length }})</span>{% endif %}{% if r.notes %}<br><small class="muted">{{ r.notes }}</small>{% endif %}</td>
+        <td>{% if r.months_high %}about {% if r.months_low and r.months_low != r.months_high %}{{ r.months_low }}–{% endif %}{{ r.months_high }} months{% else %}no estimate{% endif %}</td>
+        <td class="small muted">{{ r.citations[0] if r.citations else "" }}</td>
+        {% else %}
+        <td colspan="4" class="muted">{{ r.reason }}</td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if a.not_in_documents %}
+  <h2>Your plan's documents don't say</h2>
+  <div class="card"><ul>{% for x in a.not_in_documents %}<li>{{ x }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  {% if a.left_out %}
+  <h2>What we left out, and why</h2>
+  <div class="card">
+    <p class="small muted" style="margin-top:0">Everything above is backed by a page of your plan's documents you can check. {% if a.left_out|length == 1 %}One more statement{% else %}{{ a.left_out|length }} more statements{% endif %} could not be matched to the documents closely enough to stand behind, so {% if a.left_out|length == 1 %}it is{% else %}they are{% endif %} listed here as unconfirmed. Nothing above depends on {% if a.left_out|length == 1 %}it{% else %}them{% endif %}; if one matters to you, it is a good question for your doctor's office.</p>
+    <ul>{% for c in a.left_out %}<li><span class="pill">unconfirmed</span> {{ c.text }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  {% if a.warnings %}
+  <h2>One more thing</h2>
+  <div class="card note"><ul>{% for w in a.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
+  {% endif %}
+
+  <h2>How to use this</h2>
+  <div class="card"><p style="margin:0">This is a plain-words reading of your health plan's own published rules. It is not the final word on your case, and it is not medical advice. Think of it as a map for the conversation with your doctor's office and your health plan: it tells you what they will ask for, how long it may take, and where you have room to push. That is also why we show things like how the same plan treats people in other states, and faster ways to get the medicine your doctor thinks is right for you. Your doctor's office sends in the request; your health plan makes the decision; you can ask questions and ask for exceptions at every step.</p></div>
+
+  {% if a.citations %}
+  <h2>Where this comes from</h2>
+  <div class="card"><ol class="sources">{% for c in a.citations %}<li>{{ c }}</li>{% endfor %}</ol></div>
+  {% endif %}
+  <p class="actions"><a class="btn" href="/">Ask another question</a> <a class="btn secondary" href="/leave">Close and sign out</a></p>
+{% endif %}
+
+{% if trace %}
+<details>
+  <summary>How this answer was built</summary>
+  <div class="card">
+    <p class="small muted" style="margin-top:0">The same record the audit log keeps. Reference <span class="mono">{{ trace.id }}</span>{% if a.dry_run %} · dry run (no model was called){% endif %}.</p>
+    {% for st in trace.stages %}
+      {% if st.stage == "plan_match" %}
+        <h2>Plan match</h2>
+        <p class="small">Confidence <strong>{{ st.confidence }}</strong> — {{ st.reason }}<br>
+        <span class="muted">Documents: {{ st.documents|join("; ") }}</span></p>
+      {% elif st.stage == "retrieval" and st.packet %}
+        <h2>Passages retrieved (hybrid: keyword rank + semantic rank → fused)</h2>
+        <table>
+          <tr><th>#</th><th>Source</th><th>Section</th><th>Keyword</th><th>Semantic</th><th>Fused</th></tr>
+          {% for c in st.packet %}
+          <tr><td>[{{ c.n }}]</td><td class="small">{{ c.citation }}</td><td class="small muted">{{ c.section }}</td>
+              <td>{{ c.keyword_rank if c.keyword_rank else "—" }}</td><td>{{ c.semantic_rank if c.semantic_rank else "—" }}</td><td>{{ c.score }}</td></tr>
+          {% endfor %}
+        </table>
+      {% elif st.stage == "router" %}
+        <h2>Router</h2><p class="small">Question type: <strong>{{ st.question_type }}</strong></p>
+      {% elif st.stage.startswith("verify") %}
+        <h2>{{ st.stage.replace("_", " ") }} — {% if st.passed %}<span class="pill ok">passed</span>{% else %}<span class="pill no">did not pass</span>{% endif %}</h2>
+        {% if st.notes %}<ul class="small">{% for n in st.notes %}<li>{{ n }}</li>{% endfor %}</ul>{% endif %}
+        {% if st.per_claim %}
+        <table>
+          <tr><th>Claim</th><th>Cites</th><th>Overlap</th><th>Judge</th></tr>
+          {% for pc in st.per_claim %}
+          <tr><td class="small">{{ pc.text }}</td><td>{{ pc.citations|join(", ") }}</td><td>{{ pc.overlap if pc.overlap is defined else "—" }}</td>
+              <td>{% if pc.judge %}<span class="pill {{ 'ok' if pc.judge == 'SUPPORTED' else 'no' }}">{{ pc.judge|lower|replace('_', ' ') }}</span>{% elif pc.failed %}<span class="pill no">failed code check</span>{% else %}—{% endif %}</td></tr>
+          {% endfor %}
+        </table>
+        {% endif %}
+      {% elif st.stage.startswith("prune") %}
+        <p class="small">Pruned {{ st.dropped }} unsupported claim(s); kept {{ st.kept }}.</p>
+      {% elif st.stage == "input_guardrails" %}
+        <h2>Input guardrails</h2><p class="small">{% if st.passed %}<span class="pill ok">passed</span>{% else %}<span class="pill no">refused</span> {{ st.reason }}{% endif %}</p>
+      {% endif %}
+    {% endfor %}
+    {% if trace.calls %}
+    <h2>Model calls</h2>
+    <table>
+      <tr><th>Purpose</th><th>Model</th><th>In</th><th>Out</th><th>Stop</th><th>ms</th><th>Est. cost</th></tr>
+      {% for c in trace.calls %}
+      <tr><td>{{ c.purpose }}</td><td class="small">{{ c.model }}</td><td>{{ c.input_tokens }}</td><td>{{ c.output_tokens }}</td><td class="small">{{ c.stop_reason }}</td><td>{{ c.latency_ms }}</td><td>${{ '%.4f'|format(c.cost_usd) }}</td></tr>
+      {% endfor %}
+      <tr><th colspan="6">Total</th><th>${{ '%.4f'|format(trace.total_cost_usd or 0) }}</th></tr>
+    </table>
+    {% endif %}
+  </div>
+</details>
+{% endif %}
+{% endblock %}

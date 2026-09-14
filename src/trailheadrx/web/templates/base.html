@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Trailhead Rx{% endblock %}</title>
+{% block head %}{% endblock %}
+<style>
+  :root { --ink:#1c2b2a; --muted:#5f6f6e; --line:#d9e2e0; --bg:#f7f9f8; --card:#ffffff; --accent:#1f6f5f; --warn:#8a5a00; --warnbg:#fff6e0; --bad:#8f2d2d; --badbg:#fdeeee; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  header { border-bottom:1px solid var(--line); background:var(--card); }
+  header .in { max-width: 860px; margin:0 auto; padding: 14px 20px; display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+  header .brand { font-weight:700; letter-spacing:.2px; text-decoration:none; color:var(--ink); }
+  header .brand span { color:var(--accent); }
+  header .tag { color:var(--muted); font-size:14px; }
+  main { max-width: 860px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 15px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin: 28px 0 8px; }
+  p.lead { color:var(--muted); margin-top:0; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding: 18px 20px; margin: 14px 0; }
+  .short { font-size:18px; }
+  ul { padding-left: 20px; margin: 6px 0; }
+  li { margin: 6px 0; }
+  .cite { color:var(--muted); font-size: 13px; margin-left: 4px; white-space:nowrap; }
+  .note { background:var(--warnbg); border-color:#f1dfb0; color:var(--warn); }
+  .bad { background:var(--badbg); border-color:#f0c9c9; color:var(--bad); }
+  .muted { color:var(--muted); }
+  small, .small { font-size: 13px; }
+  label { display:block; font-weight:700; font-size:17px; margin: 18px 0 6px; }
+  .form label:first-child { margin-top: 4px; }
+  select, input[type=text], textarea { width:100%; font: inherit; font-size:16px; padding: 11px 12px; border:1px solid #c9d6d3; border-radius:8px; background:#f2f7f5; color:var(--ink); transition: border-color .15s, background .15s, box-shadow .15s; }
+  select { appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1l6 6 6-6' fill='none' stroke='%231f6f5f' stroke-width='2'/></svg>"); background-repeat:no-repeat; background-position: right 12px center; padding-right: 36px; }
+  select:hover, textarea:hover { background-color:#eef5f2; }
+  select:focus, input:focus, textarea:focus { outline:none; border-color:var(--accent); background-color:#fff; box-shadow: 0 0 0 3px rgba(31,111,95,.18); }
+  .form small.muted { display:block; margin-top:6px; line-height:1.4; }
+  textarea { min-height: 90px; }
+  .actions { display:flex; gap:12px; flex-wrap:wrap; margin: 24px 0; }
+  .btn { display:inline-block; font-weight:600; background:var(--accent); color:#fff; border-radius:8px; padding: 11px 18px; text-decoration:none; }
+  .btn.secondary { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  .row { display:flex; gap:16px; flex-wrap:wrap; }
+  .row > div { flex: 1 1 260px; }
+  .check { display:flex; align-items:flex-start; gap:10px; font-weight:500; font-size:16px; margin-top: 18px; }
+  .check input { margin-top:5px; width:18px; height:18px; accent-color: var(--accent); }
+  button { font: inherit; font-weight:600; background:var(--accent); color:#fff; border:0; border-radius:8px; padding: 11px 18px; cursor:pointer; margin-top: 16px; }
+  button:hover { filter: brightness(1.08); }
+  .sources li { font-size: 13px; color:var(--muted); }
+  details { margin-top: 20px; }
+  summary { cursor:pointer; font-weight:600; color:var(--accent); }
+  table { border-collapse: collapse; width:100%; font-size: 14px; margin-top: 8px; }
+  th, td { text-align:left; vertical-align:top; padding: 6px 8px; border-bottom:1px solid var(--line); }
+  th { color:var(--muted); font-weight:600; }
+  .pill { display:inline-block; font-size:12px; padding:1px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .pill.ok { border-color:#bfe0d3; color:#1f6f5f; background:#eaf6f1; }
+  .pill.no { border-color:#f0c9c9; color:var(--bad); background:var(--badbg); }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; white-space: pre-wrap; }
+  footer { max-width:860px; margin: 0 auto; padding: 0 20px 40px; color:var(--muted); font-size:13px; }
+  .arrow { color:var(--accent); font-weight:700; }
+</style>
+</head>
+<body>
+<header><div class="in">
+  <a class="brand" href="/">Trailhead<span>Rx</span></a>
+  <span class="tag">Your plan's rules, in plain words — migraine medicines, Ohio{% if dry_run %} · <strong>dry run</strong>{% endif %}</span>
+</div></header>
+<main>
+{% block body %}{% endblock %}
+</main>
+<footer>Trailhead Rx reads your health plan's published policy and the drug makers' program pages. It is not medical advice and does not decide your case. Nothing you type is stored with your name; do not enter personal details.</footer>
+</body>
+</html>

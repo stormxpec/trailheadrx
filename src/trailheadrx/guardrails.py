@@ -39,7 +39,8 @@ class GateResult:
 PHI_PATTERNS = [
     (r"\b\d{3}-\d{2}-\d{4}\b", "a Social Security number"),
     (r"\b(?:\d{1,2}[/-]){2}(?:19|20)\d{2}\b", "a date of birth or date"),
-    (r"\b(?:mrn|member id|member #|subscriber id|policy number)\s*[:#]?\s*[A-Z0-9-]{5,}\b", "a member or record ID"),
+    (r"\b(?:mrn|member (?:id|number|#)|subscriber (?:id|number)|policy number|id number)\s*(?:is|=|:|#)?\s*[A-Z0-9-]{5,}\b", "a member or record ID"),
+    (r"\b(?:my|the) (?:member|subscriber|policy|insurance) (?:id|number)\b[^.?!]{0,20}\b[A-Z]*\d{4,}[A-Z0-9-]*\b", "a member or record ID"),
     (r"\b\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}\b", "a phone number"),
     (r"[\w.+-]+@[\w-]+\.[\w.]+", "an email address"),
     (r"\b\d{1,5}\s+[A-Za-z0-9.\s]+\b(?:street|st|avenue|ave|road|rd|drive|dr|lane|ln|blvd)\b\.?", "a street address"),

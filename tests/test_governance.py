@@ -41,6 +41,8 @@ def test_phi_patterns_refuse():
         "my SSN is 123-45-6789 what does my plan require",
         "DOB 04/12/1981, need Emgality",
         "member id: AB12345678 does Aetna cover Nurtec",
+        "my member id is AB12345678, what do I need?",
+        "my subscriber number's 99887766 and I need Emgality",
         "call me at (614) 555-0142",
         "email me at someone@example.com",
         "I was diagnosed with chronic migraine last year, what now",

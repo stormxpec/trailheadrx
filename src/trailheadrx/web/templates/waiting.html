@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block head %}{% if job and job.status in ("queued", "running") %}<meta http-equiv="refresh" content="4">{% endif %}{% endblock %}
+{% block body %}
+{% if job is none %}
+  <h1>That answer is no longer here</h1>
+  <p class="lead">Answers are kept for about an hour and then dropped; nothing is stored. <a href="/">Ask again</a>.</p>
+{% elif job.status == "failed" %}
+  <h1>Something went wrong</h1>
+  <div class="card bad">The answer could not be produced. <span class="mono">{{ job.error }}</span></div>
+  <p><a href="/">Try again</a></p>
+{% else %}
+  <h1>Reading your plan's documents…</h1>
+  <p class="lead">{% if job.status == "queued" %}Waiting for a turn.{% else %}Finding the right passages, writing the answer, and checking every statement against the policy. This usually takes one to two minutes{% if job.request.compare %}, a little longer with the class comparison{% endif %}.{% endif %} This page refreshes on its own. ({{ elapsed }}s)</p>
+  <div class="card muted small">{{ job.request.payer }} · {{ job.request.drug }} · {{ job.request.lob.replace('_', ' ') }}</div>
+{% endif %}
+{% endblock %}

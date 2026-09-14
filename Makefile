@@ -17,4 +17,7 @@ eval:             ## run the golden scenarios and print the scorecard
 test:             ## unit tests for rules-as-code and guardrails (no model calls)
 	$(PY) -m pytest -q tests
 
-.PHONY: setup ingest status eval test
+web:              ## run the website locally at http://127.0.0.1:8000
+	$(PY) -m uvicorn trailheadrx.web.app:app --reload --port 8000
+
+.PHONY: setup ingest status eval test web

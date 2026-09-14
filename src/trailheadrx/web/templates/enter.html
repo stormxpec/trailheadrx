@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>Welcome</h1>
+<p class="lead">Trailhead Rx is in private testing. Enter the access code you were given.</p>
+{% if error %}<div class="card bad">{{ error }}</div>{% endif %}
+<form method="post" action="/enter" class="card">
+  <label for="code">Access code</label>
+  <input type="text" id="code" name="code" autocomplete="off" autofocus>
+  <button type="submit">Continue</button>
+</form>
+{% endblock %}

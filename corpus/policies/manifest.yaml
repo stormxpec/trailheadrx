@@ -77,8 +77,8 @@ documents:
     effective_or_reviewed: "06-2023 version fetched; 06-2024 URL returned 404 — look for newer on the Pharmacy CPB index"
     st_note: 8-week trial of at least ONE class (AED, beta-blocker, or antidepressant) unless intolerance/contraindication. Notably lighter than UHC.
     status: found
-    file: null
-    downloaded_on: null
+    file: aetna-cgrp-injectable-2761e.html
+    downloaded_on: "2026-09-13"
     alt_url: https://www.aetna.com/health-care-professionals/clinical-policy-bulletins/pharmacy-clinical-policy-bulletins.html
 
   - payer: Aetna (CVS Caremark criteria)
@@ -91,8 +91,8 @@ documents:
     effective_or_reviewed: "UDR 06-2024"
     st_note: Prevention (Nurtec/Qulipta) — >=56-day supply of one standard preventive in past 730 days. Acute (Nurtec/Ubrelvy/Zavzpret) — inadequate response/intolerance to TWO triptans or contraindication.
     status: found
-    file: null
-    downloaded_on: null
+    file: aetna-cgrp-oral-nasal-3481e.html
+    downloaded_on: "2026-09-13"
 
   - payer: Cigna / Express Scripts
     line_of_business: commercial
@@ -136,8 +136,8 @@ documents:
     effective_or_reviewed: "revised 2025-09-18"
     st_note: Acute — >=1 triptan tried or contraindicated. Preventive — 4-14 migraine days/month plus 2 preventives from different classes failed.
     status: found
-    file: null
-    downloaded_on: null
+    file: medmutual-nurtec.pdf
+    downloaded_on: "2026-09-13"
 
   - payer: Medical Mutual of Ohio
     line_of_business: commercial
@@ -149,8 +149,8 @@ documents:
     effective_or_reviewed: null
     st_note: Not yet read.
     status: found
-    file: null
-    downloaded_on: null
+    file: medmutual-qulipta.pdf
+    downloaded_on: "2026-09-13"
 
   - payer: Anthem / Elevance (Ohio) — CarelonRx
     line_of_business: commercial
@@ -561,3 +561,36 @@ documents:
     status: found
     file: ohio-orc-3922-09.html
     downloaded_on: "2026-09-13"
+
+  # =========================================================================
+  # Federal rules for self-funded (ERISA) employer plans. Ohio insurance law
+  # does not reach these plans; these do. Retrieved only when the member says
+  # the plan is self-funded.
+  # =========================================================================
+
+  - payer: Code of Federal Regulations
+    line_of_business: reference_federal
+    benefit_type: n/a
+    scope: ERISA claims procedure — decision and appeal deadlines for employer plans
+    title: 29 CFR 2560.503-1 — Claims procedure (ERISA)
+    policy_id: "29 CFR 2560.503-1"
+    url: https://www.ecfr.gov/current/title-29/section-2560.503-1
+    effective_or_reviewed: "current eCFR text, read 2026-09-13"
+    st_note: Pre-service claims decided within 15 days (one 15-day extension); urgent care claims within 72 hours; appeal decided within 30 days pre-service (72 hours urgent); plan must give the specific reason and the rule relied on, and let the claimant see the file.
+    status: found
+    file: ecfr-29-2560-503-1.html
+    downloaded_on: "2026-09-13"
+
+  - payer: Code of Federal Regulations
+    line_of_business: reference_federal
+    benefit_type: n/a
+    scope: Internal appeals and external review for group health plans (ACA)
+    title: 45 CFR 147.136 — Internal claims and appeals and external review processes
+    policy_id: "45 CFR 147.136"
+    url: https://www.ecfr.gov/current/title-45/section-147.136
+    effective_or_reviewed: "current eCFR text, read 2026-09-13"
+    st_note: Non-grandfathered plans, including self-funded plans, must offer an external review by an independent review organization after the internal appeal; urgent claims 72 hours; the federal external review process applies where a state process does not reach the plan.
+    status: found
+    file: ecfr-45-147-136.html
+    downloaded_on: "2026-09-13"
+

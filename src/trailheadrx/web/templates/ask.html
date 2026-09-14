@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block body %}
+<h1>What does your plan require?</h1>
+<p class="lead">Pick your health plan and the medicine your doctor has in mind, then choose the question closest to what you are trying to figure out — or write your own in plain words. You will get what the plan's own policy says, what it takes to get there, and other ways to get the medicine.</p>
+{% if error %}<div class="card bad">{{ error }}</div>{% endif %}
+<form method="post" action="/ask" class="card form">
+  <div class="row">
+    <div>
+      <label for="payer">Health plan</label>
+      <select id="payer" name="payer" required>
+        {% for value, label in payers %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+      <small class="muted">Only plans whose rules we have loaded are listed, with the kinds of plan we hold for each. More are being added.</small>
+    </div>
+    <div>
+      <label for="lob">Kind of plan</label>
+      <select id="lob" name="lob" required>
+        {% for key, label in lobs %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div>
+      <label for="drug">Medicine</label>
+      <select id="drug" name="drug" required>
+        {% for d in drugs %}<option value="{{ d.brand }}">{{ d.brand }} ({{ d.generic }}) — {{ d.group|lower }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="self_funded">Employer plan: is it self-funded?</label>
+      <select id="self_funded" name="self_funded">
+        <option value="unknown">I don't know (most people don't)</option>
+        <option value="no">No</option>
+        <option value="yes">Yes</option>
+      </select>
+      <small class="muted">Self-funded employer plans follow federal rules (ERISA) instead of Ohio's step-therapy law. HR or the plan's member services line can tell you.</small>
+    </div>
+  </div>
+
+  <label for="preset">What do you want to know?</label>
+  <select id="preset" name="preset">
+    {% for key, text in presets %}<option value="{{ key }}">{{ text }}</option>{% endfor %}
+  </select>
+
+  <label for="question">Anything to add, in your own words <span class="muted" style="font-weight:400">(optional)</span></label>
+  <textarea id="question" name="question" placeholder="For example: I already tried topiramate on my old plan. — or — I'd pay cash if it's faster."></textarea>
+  <small class="muted">Please don't include your name, member ID, date of birth, or medical history. The question is checked and refused if it looks like it does.</small>
+
+  <label class="check"><input type="checkbox" name="compare" value="1"> Include all the medicines in this class, comparing timing and cost of each path (takes about a minute longer)</label>
+  <button type="submit">Learn what my plan's rules dictate</button>
+</form>
+<p class="small muted">Budget today: ${{ '%.2f'|format(spend.today_usd) }} of ${{ '%.2f'|format(spend.cap_usd) }} used. <a href="/leave">Sign out</a></p>
+{% endblock %}
