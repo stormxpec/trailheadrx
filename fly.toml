@@ -1,0 +1,41 @@
+# Fly.io app definition for Trailhead Rx. `fly deploy` reads this.
+app = "trailheadrx"
+primary_region = "ord"          # Chicago — nearest region to Ohio
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+# Persistent disk for what the app writes: the audit trace and plan-name
+# requests. Everything else in the image is read-only and rebuilt on deploy.
+[[mounts]]
+  source = "trailheadrx_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # "suspend" pauses an idle machine and resumes it in a second or two with
+  # memory intact (the embedding model stays loaded). Costs almost nothing
+  # while idle. Change to "off" + min_machines_running = 1 for always-on.
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 20
+    hard_limit = 40
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "5s"
+  grace_period = "60s"          # model warm-up on first start
+  method = "GET"
+  path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "2gb"                # sentence-transformers + torch need ~1.2 GB

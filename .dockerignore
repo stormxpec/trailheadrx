@@ -1,10 +1,19 @@
+# Build context for the Fly image. Unlike .gitignore, the corpus documents ARE
+# included (private image, public repo). Secrets and run-time output are not.
 .venv
+venv
 .env
+.env.*
+*.key
+*.pem
 index/
 governance/audit/
-corpus/policies/*
-!corpus/policies/manifest.yaml
-corpus/programs/*
-!corpus/programs/manifest.yaml
+governance/requested_plans.jsonl
+uploads/
+tmp/
 __pycache__
+*.pyc
 .git
+.pytest_cache
+tests/
+evals/last_run.json

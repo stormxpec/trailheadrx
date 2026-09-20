@@ -26,6 +26,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import os
+
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -39,6 +41,22 @@ from . import gate, plans
 from .jobs import JobRunner
 
 app = FastAPI(title="Trailhead Rx", docs_url=None, redoc_url=None)
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    """Standard browser protections. No inline scripts exist (the site has no
+    JavaScript), so the content-security policy can be strict: same-origin
+    everything, no frames, no plugins."""
+    resp = await call_next(request)
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    resp.headers["X-Frame-Options"] = "DENY"
+    resp.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    resp.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; form-action 'self'; frame-ancestors 'none'; base-uri 'self'"
+    resp.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    if HTTPS:
+        resp.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return resp
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 limiter = gate.Limiter()
 runner = JobRunner()
@@ -54,7 +72,17 @@ LOBS = [
 
 # ---- helpers ---------------------------------------------------------------
 
+HTTPS = os.environ.get("TRAILHEADRX_HTTPS") == "1"   # set in the Fly image; off on a laptop
+
+
 def _ip(request: Request) -> str:
+    """The visitor's address for rate limiting. Behind Fly's proxy the real
+    address arrives in Fly-Client-IP (one value, set by Fly, not spoofable);
+    X-Forwarded-For is the general convention; the socket address is the
+    laptop case."""
+    fly = request.headers.get("fly-client-ip")
+    if fly:
+        return fly.strip()
     fwd = request.headers.get("x-forwarded-for")
     return (fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "?"))
 
@@ -164,7 +192,7 @@ def enter(request: Request, code: str = Form("")):
         limiter.bad_login(ip)               # counted, never logged with the text typed
         return _page(request, "enter.html", 401, error="That code did not match.")
     resp = RedirectResponse("/", status_code=303)
-    resp.set_cookie(COOKIE, gate.cookie_token(), httponly=True, samesite="lax", max_age=60 * 60 * 24 * 30)
+    resp.set_cookie(COOKIE, gate.cookie_token(), httponly=True, samesite="lax", secure=HTTPS, max_age=60 * 60 * 24 * 30)
     return resp
 
 

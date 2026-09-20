@@ -192,3 +192,15 @@ def test_failed_job_can_be_retried(client):
     assert "connection to the model dropped" in page.text and f'action="/a/{job.id}/retry"' in page.text
     r = client.post(f"/a/{job.id}/retry", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] != f"/a/{job.id}"
+
+
+def test_security_headers_and_fly_ip(client):
+    from trailheadrx.web import app as webapp
+    r = client.get("/health", headers={"fly-client-ip": "203.0.113.9"})
+    assert r.headers["x-frame-options"] == "DENY" and "default-src 'self'" in r.headers["content-security-policy"]
+    assert "strict-transport-security" not in r.headers          # laptop: TRAILHEADRX_HTTPS unset
+
+    class R:  # minimal stand-in for a Request
+        def __init__(self, h): self.headers, self.client = h, None
+    assert webapp._ip(R({"fly-client-ip": "203.0.113.9", "x-forwarded-for": "10.0.0.1"})) == "203.0.113.9"
+    assert webapp._ip(R({"x-forwarded-for": "10.0.0.1, 10.0.0.2"})) == "10.0.0.1"
