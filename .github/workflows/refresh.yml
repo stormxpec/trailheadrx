@@ -25,21 +25,19 @@ jobs:
       - name: run the refresh on the app machine
         run: flyctl machine exec ${{ steps.machine.outputs.id }} "python -m trailheadrx refresh" -a trailheadrx --timeout 600
       # A machine exec may not run longer than 600 s, and a sweep can. So the
-      # sweep is started in the background on the machine; this job then keeps
-      # the machine awake (a request every 30 s stops it suspending) and waits
-      # for the done-marker, then prints the report. The sweep emails on its own.
+      # sweep is started in the background by a script on the machine (exec
+      # cannot carry shell quoting, and does not reliably pass exit codes);
+      # this job keeps the machine awake with a request every 30 s, polls a
+      # status script, then prints the report. The sweep emails on its own.
       - name: start the sweep in the background (budget-capped in config.yaml)
-        run: >
-          flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 60
-          "sh -c 'rm -f /data/sweep.done; nohup sh -c \"python -m trailheadrx sweep --pairs 12; touch /data/sweep.done\" > /data/sweep.log 2>&1 &'"
+        run: flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 60 "sh /app/scripts/sweep_start.sh --pairs 12"
       - name: wait for it, keeping the machine awake
         run: |
           for i in $(seq 1 150); do
             curl -s -o /dev/null https://trailheadrx.com/health || true
-            if flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 30 "test -f /data/sweep.done" >/dev/null 2>&1; then
-              echo "sweep finished after ~$((i*30)) s"; break
-            fi
+            OUT=$(flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 30 "sh /app/scripts/sweep_status.sh" 2>/dev/null || true)
+            case "$OUT" in *STATUS=DONE*) echo "sweep finished after ~$((i*30)) s"; break;; esac
             sleep 30
           done
       - name: sweep report
-        run: flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 30 "cat /data/sweep.log"
+        run: flyctl machine exec ${{ steps.machine.outputs.id }} -a trailheadrx --timeout 30 "sh /app/scripts/sweep_report.sh"
