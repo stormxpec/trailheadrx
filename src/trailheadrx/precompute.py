@@ -50,6 +50,7 @@ class SweepReport:
     computed: int = 0
     skipped_cached: int = 0
     abstained: int = 0
+    abstain_reasons: Counter = field(default_factory=Counter)
     failed: list[str] = field(default_factory=list)
     drift: list[Drift] = field(default_factory=list)
     stopped_for_budget: bool = False
@@ -60,6 +61,11 @@ class SweepReport:
                  f"{self.computed} answered · {self.skipped_cached} already cached · {self.abstained} abstained · "
                  f"{len(self.failed)} failed · est. ${self.spent_usd:.2f}"
                  + (" · STOPPED AT BUDGET" if self.stopped_for_budget else ""), ""]
+        if self.abstain_reasons:
+            lines.append("Abstained, by reason:")
+            for reason, n in self.abstain_reasons.most_common(6):
+                lines.append(f"  {n} × {reason[:140]}")
+            lines.append("")
         if self.drift:
             lines.append(f"{len(self.drift)} answers changed since the last sweep:")
             for d in self.drift:
@@ -104,13 +110,26 @@ def menu(presets: list[tuple[str, str]] | None = None) -> list[dict]:
 
 
 def most_asked(limit: int) -> list[tuple[str, str]]:
-    """(payer, drug) pairs by how often the audit trace shows them asked."""
+    """(payer, drug) pairs by how often the audit trace shows them ANSWERED.
+    Abstained requests are left out — re-running "we don't hold that plan"
+    twenty times a night would warm nothing — and the list is topped up
+    from the menu so the sweep always has real work."""
     counts: Counter = Counter()
     for rec in read_all():
         req = rec.get("request") or {}
-        if req.get("payer") and req.get("drug"):
+        if req.get("payer") and req.get("drug") and rec.get("outcome", "answered") == "answered":
             counts[(req["payer"], req["drug"])] += 1
-    return [k for k, _ in counts.most_common(limit)]
+    top = [k for k, _ in counts.most_common(limit)]
+    if len(top) < limit:
+        seen = set(top)
+        for r in menu():
+            k = (r["payer"], r["drug"])
+            if k not in seen:
+                top.append(k)
+                seen.add(k)
+            if len(top) >= limit:
+                break
+    return top
 
 
 def _signature(ans, table) -> dict:
@@ -129,7 +148,7 @@ def sweep(pairs: int | None = None, budget_usd: float | None = None, dry: bool =
     requests = menu()
     if pairs:
         top = set(most_asked(pairs))
-        requests = [r for r in requests if (r["payer"], r["drug"]) in top] or requests[: pairs * 5]
+        requests = [r for r in requests if (r["payer"], r["drug"]) in top]
     record = _load_record()
     start_spend = spend_today().today_usd
 
@@ -152,6 +171,7 @@ def sweep(pairs: int | None = None, budget_usd: float | None = None, dry: bool =
             continue
         if ans.outcome != "answered":
             report.abstained += 1
+            report.abstain_reasons[(ans.reason or ans.outcome).split(". ")[0]] += 1
             continue
         report.computed += 1
         sig = _signature(ans, table)
