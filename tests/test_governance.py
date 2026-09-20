@@ -102,3 +102,29 @@ def test_other_routes_discontinued_and_unknown():
     from trailheadrx.programs import other_routes
     assert "discontinued" in other_routes("Reyvow", "commercial")[0]
     assert "on file" in other_routes("Ozempic", "commercial")[0]
+
+
+def test_assistance_program_eligibility_is_rules_as_code():
+    from trailheadrx import rules
+    from trailheadrx.programs import routes_structured
+    never = {"eligible_coverage": {"commercial": "never", "medicare": True, "medicaid": False}}
+    cond = {"eligible_coverage": {"commercial": "if_not_covered", "medicare": True, "medicaid": False}}
+    assert rules.assistance_allowed("commercial", never).allowed is False
+    assert rules.assistance_allowed("commercial", cond).allowed is True
+    assert rules.assistance_allowed("medicare_advantage", never).allowed is True
+    assert rules.assistance_allowed("medicaid_mco", cond).allowed is False
+    assert rules.assistance_allowed("commercial", {}).allowed is True      # unknown → say so, do not hide
+    # applied to the corpus: Lilly Cares is not open to commercial members, is to Medicare
+    pap = {r["key"]: r for r in routes_structured("Emgality", "commercial")}["pap"]
+    assert pap["available"] is False and "no insurance or on Medicare" in pap["reason"]
+    pap = {r["key"]: r for r in routes_structured("Emgality", "medicare_advantage")}["pap"]
+    assert pap["available"] is True
+
+
+def test_lead_time_is_computed_in_code_from_trial_lengths():
+    from trailheadrx.compare import months_from_steps
+    assert months_from_steps([{"what": "a preventive", "days": 56}]) == (2, 3, 56)
+    assert months_from_steps([{"what": "a", "days": 56}, {"what": "b", "days": 56}]) == (4, 5, 112)
+    assert months_from_steps([{"what": "a", "days": 90}]) == (3, 4, 90)
+    assert months_from_steps([{"what": "a", "days": None}]) == (None, None, 0)   # no length stated → no estimate
+    assert months_from_steps([]) == (None, None, 0)

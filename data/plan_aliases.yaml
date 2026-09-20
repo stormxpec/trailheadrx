@@ -1,0 +1,75 @@
+_meta:
+  description: >
+    Names people see on their insurance card that are not the payer whose
+    rules apply. Each maps to the payer and kind of plan Trailhead Rx uses,
+    and, where the name settles it, whether the plan is self-funded.
+    Matched case-insensitively as a substring of what the visitor types.
+  verified_on: "2026-09-16"
+
+aliases:
+  - name: Meritain Health
+    match: [meritain]
+    payer: Aetna
+    lob: commercial
+    self_funded: true
+    note: Aetna's third-party administrator for self-funded employer plans; Aetna network and clinical policy.
+  - name: UMR
+    match: [umr]
+    payer: UnitedHealthcare
+    lob: commercial
+    self_funded: true
+    note: UnitedHealthcare's third-party administrator for self-funded employer plans.
+  - name: Surest
+    match: [surest]
+    payer: UnitedHealthcare
+    lob: commercial
+    note: A UnitedHealthcare plan design.
+  - name: Optum Rx
+    match: [optum]
+    payer: UnitedHealthcare
+    lob: commercial
+    note: UnitedHealthcare's pharmacy benefit manager; the pharmacy rules are Optum Rx's.
+  - name: Aetna Better Health of Ohio
+    match: [aetna better health]
+    payer: Aetna
+    lob: medicaid_mco
+  - name: Anthem Blue Cross Blue Shield of Ohio
+    match: [anthem, carelon, ingenio]
+    payer: Anthem
+    lob: commercial
+    note: Elevance brands. Anthem does not publish its commercial pharmacy criteria; Anthem's Ohio Medicaid plan follows the state list.
+  - name: Buckeye Health Plan
+    match: [buckeye]
+    payer: Buckeye
+    lob: medicaid_mco
+    note: Centene's Ohio Medicaid plan.
+  - name: Ambetter
+    match: [ambetter]
+    payer: Centene
+    lob: marketplace
+  - name: Wellcare
+    match: [wellcare]
+    payer: Centene
+    lob: medicare_advantage
+  - name: Humana Healthy Horizons
+    match: [healthy horizons]
+    payer: Humana Healthy Horizons
+    lob: medicaid_mco
+  - name: CareSource
+    match: [caresource]
+    payer: CareSource
+    lob: medicaid_mco
+    note: CareSource also sells marketplace and Medicare plans; the Medicaid plan is the one we hold.
+  - name: Molina Healthcare of Ohio
+    match: [molina]
+    payer: Molina
+    lob: medicaid_mco
+  - name: AmeriHealth Caritas Ohio
+    match: [amerihealth]
+    payer: AmeriHealth Caritas
+    lob: medicaid_mco
+  - name: Express Scripts / Evernorth / Cigna
+    match: [express scripts, evernorth, cigna]
+    payer: Cigna
+    lob: commercial
+    note: One company; not loaded yet.

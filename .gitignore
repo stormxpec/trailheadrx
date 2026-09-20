@@ -17,6 +17,7 @@ index/
 *.sqlite
 *.db
 governance/audit/
+governance/requested_plans.jsonl
 uploads/
 tmp/
 

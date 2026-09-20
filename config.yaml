@@ -18,6 +18,8 @@ paths:
   policies_dir: corpus/policies
   programs_manifest: corpus/programs/manifest.yaml
   drugs: data/drugs_migraine.yaml
+  plan_aliases: data/plan_aliases.yaml
+  requested_plans: governance/requested_plans.jsonl
   rules: governance/rules.yaml
   index_db: index/trailheadrx.sqlite
   audit_dir: governance/audit
@@ -42,3 +44,4 @@ web:                       # session 4: the form in front of the pipeline
   daily_spend_cap_usd: 5.0 # estimated Anthropic spend per UTC day; the site refuses new questions above this
   job_workers: 2           # answers computed at once; the rest queue
   job_ttl_minutes: 60      # finished answers are kept in memory this long, then dropped (nothing is written)
+  cache_hours: 24          # a repeat of the same menu-only request (no free text) is served from memory this long

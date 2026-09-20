@@ -1,7 +1,13 @@
 {% extends "base.html" %}
+{% from "illos.html" import person_at_laptop %}
 {% block body %}
-<h1>Welcome</h1>
-<p class="lead">Trailhead Rx is in private testing. Enter the access code you were given.</p>
+<section class="hero">
+  <div class="hero-text">
+    <h1>Figuring out your insurance plan's rules for a medication is hard.</h1>
+    <p class="lead">Trailhead Rx reads your plan's actual policy and shows you what it takes to get the medication your doctor has in mind. It is in private testing; enter the access code you were given.</p>
+  </div>
+  <div class="hero-art">{{ person_at_laptop(300) }}</div>
+</section>
 {% if error %}<div class="card bad">{{ error }}</div>{% endif %}
 <form method="post" action="/enter" class="card">
   <label for="code">Access code</label>

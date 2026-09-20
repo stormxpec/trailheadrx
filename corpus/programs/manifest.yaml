@@ -20,12 +20,14 @@ programs:
       name: LillyDirect
       how: "Cash purchase through Lilly's own pharmacy partners; free delivery or pickup; prescription required."
       price_text: "starting at $299 per month (120 mg pen); taxes and fees may apply"
+      price_short: "from $299/mo"
       url: https://www.lilly.com/lillydirect/medicines/emgality
       verified_on: "2026-09-13"
     copay_card:
       name: Emgality Savings Card
       eligibility: "commercial insurance that covers Emgality; age 18+; US/PR resident"
       you_pay: "as little as $35 per month"
+      you_pay_short: "as little as $35/mo"
       annual_max: "$4,900 per calendar year (up to 13 fills)"
       expires: "2026-12-31"
       url: https://emgality.lilly.com/savings-support
@@ -39,6 +41,8 @@ programs:
       name: Lilly Cares Foundation
       income_ceiling_fpl_pct: 300
       insurance_rule: "uninsured, or Medicare Part D; not Medicaid, full Extra Help, or VA"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: never, medicare: yes, medicaid: no}
       url: https://www.lillycares.com/how-to-apply
       verified_on: "2026-09-13"
     exclusions: "savings card and $35 offer exclude anyone in a state, federal, or government-funded program"
@@ -51,6 +55,8 @@ programs:
       name: Aimovig Co-Pay Card
       eligibility: "commercial insurance; under 18 must enroll by phone; US/PR/territories"
       you_pay: "as little as $5 per month per the prescriber site; the patient site says as little as $49 — confirm by phone"
+      you_pay_short: "as little as $5/mo"
+      you_pay_note: "the prescriber site says $5, the patient site $49 — confirm by phone"
       annual_max: "a maximum annual benefit applies; amount not stated on the pages read"
       expires: "re-enrollment required periodically; no fixed date published"
       url: https://www.aimovig.com/paying-for-aimovig
@@ -61,6 +67,8 @@ programs:
       name: Amgen Safety Net Foundation
       income_ceiling_fpl_pct: null
       insurance_rule: "uninsured or plan excludes the medicine; Medicare Part D may qualify; must show ineligibility for Medicaid/Extra Help"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: if_not_covered, medicare: yes, medicaid: no}
       url: https://www.amgensafetynetfoundation.com/eligibility.html
       verified_on: "2026-09-13"
     exclusions: "card not valid with Medicare, Medicaid, TRICARE, DoD, VA, or other government programs; not for cash-pay"
@@ -73,6 +81,7 @@ programs:
       name: AJOVY Savings Card
       eligibility: "commercial prescription insurance (pharmacy benefit); US/territories"
       you_pay: "as little as $15"
+      you_pay_short: "as little as $15"
       annual_max: "per-prescription and annual limits apply; amounts not stated"
       expires: "2026-12-31"
       url: https://www.ajovy.com/savings
@@ -82,6 +91,8 @@ programs:
       name: Teva Cares Foundation
       income_ceiling_fpl_pct: 300
       insurance_rule: "uninsured or unable to afford; under 150% FPL must show Extra Help denial first; up to 12 months, reapply annually"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: if_not_covered, medicare: yes, medicaid: no}
       url: https://www.tevacares.org/faq/
       verified_on: "2026-09-13"
     exclusions: "card not available to anyone eligible for Medicare, Medicaid, TRICARE, VA, DoD, or other public coverage; not for cash-pay"
@@ -94,6 +105,8 @@ programs:
       name: VYEPTI CONNECT Copay Assistance
       eligibility: "commercial insurance; age 17+; US/PR"
       you_pay: "as little as $0 per infusion (every 3 months), plus up to $200 per infusion toward the administration cost"
+      you_pay_short: "as little as $0/infusion"
+      you_pay_note: "plus up to $200 per infusion toward the administration cost"
       annual_max: "a calendar-year maximum applies; amount not stated"
       expires: "none published"
       url: https://www.vyepti.com/financial-assistance
@@ -103,6 +116,8 @@ programs:
       name: Lundbeck Patient Assistance Program
       income_ceiling_fpl_pct: null
       insurance_rule: "referenced by Lundbeck; criteria not readable on a Lundbeck page — call to confirm"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: unknown, medicare: unknown, medicaid: no}
       url: https://www.vyepti.com/financial-assistance
       verified_on: "2026-09-13"
       confidence: low
@@ -122,6 +137,7 @@ programs:
       name: Nurtec ODT Savings Card
       eligibility: "commercial insurance"
       you_pay: "as little as $0 per month"
+      you_pay_short: "as little as $0/mo"
       annual_max: "$7,000"
       expires: not_found
       url: https://www.nurtec.com/savings
@@ -135,6 +151,8 @@ programs:
       name: Pfizer Patient Assistance (Pfizer RxPathways)
       income_ceiling_fpl_pct: 300
       insurance_rule: "uninsured or government-insured only; commercially insured are not eligible; Part D patients must enroll in the Medicare Prescription Payment Plan"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: never, medicare: yes, medicaid: no}
       url: https://www.pfizerrxpathways.com/node/2617
       verified_on: "2026-09-13"
     exclusions: "Pfizer's standard card terms exclude Medicare, Medicaid, TRICARE, VA, and cash-pay (stated on the Zavzpret card; not restated on the Nurtec page)"
@@ -147,6 +165,7 @@ programs:
       name: Zavzpret Savings Card
       eligibility: "commercial insurance; age 18+"
       you_pay: "as little as $0; one redemption per 30 days"
+      you_pay_short: "as little as $0/mo"
       annual_max: not_found
       expires: "2026-12-31"
       url: https://www.zavzpret.com/savings
@@ -160,6 +179,8 @@ programs:
       name: Pfizer Patient Assistance (Pfizer RxPathways)
       income_ceiling_fpl_pct: 300
       insurance_rule: "uninsured or government-insured only"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: never, medicare: yes, medicaid: no}
       url: https://www.pfizerrxpathways.com/resources/patients
       verified_on: "2026-09-13"
     exclusions: "card not for Medicare, Medicaid, TRICARE, VA, state programs, or cash-pay"
@@ -171,6 +192,7 @@ programs:
       name: QULIPTA Complete Savings Card
       eligibility: "commercial insurance; age 18+; void in certain states"
       you_pay: "as little as $0 per monthly fill"
+      you_pay_short: "as little as $0/mo"
       annual_max: "$7,000 per calendar year"
       expires: not_found
       url: https://www.qulipta.com/savings-support
@@ -185,6 +207,8 @@ programs:
       income_ceiling_fpl_pct: null
       income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000; +$22,720 each additional"
       insurance_rule: "limited or no coverage; commercially insured not eligible; Part D under 150% FPL must show Extra Help denial"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: never, medicare: yes, medicaid: no}
       url: https://www.abbvie.com/patients/patient-assistance.html
       verified_on: "2026-09-13"
     exclusions: "card not for Medicare (incl. Part D and Advantage), Medigap, Medicaid, TRICARE, DoD, VA"
@@ -197,6 +221,7 @@ programs:
       name: UBRELVY Savings Card
       eligibility: "commercial insurance; age 18+; void in certain states"
       you_pay: "as little as $0 per monthly fill"
+      you_pay_short: "as little as $0/mo"
       annual_max: "$7,000 per calendar year"
       expires: not_found
       url: https://www.ubrelvy.com/savings
@@ -211,6 +236,8 @@ programs:
       income_ceiling_fpl_pct: null
       income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000; +$22,720 each additional"
       insurance_rule: "limited or no coverage; commercially insured not eligible"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: never, medicare: yes, medicaid: no}
       url: https://www.abbvie.com/patients/patient-assistance.html
       verified_on: "2026-09-13"
     exclusions: "card not for Medicare, Medicaid, or government programs; not for cash-pay"
@@ -223,6 +250,7 @@ programs:
       name: BOTOX Savings Program
       eligibility: "commercial insurance; covers the drug and the injection procedure cost, not the office-visit copay"
       you_pay: "may pay as little as $0"
+      you_pay_short: "as little as $0"
       annual_max: "$4,000 per year (first treatment up to $1,300, later treatments up to $1,000; claims within 180 days)"
       expires: not_found
       url: https://www.botoxchronicmigraine.com/savings-support
@@ -233,6 +261,8 @@ programs:
       income_ceiling_fpl_pct: null
       income_table: "household of 1 up to $63,840; 2 up to $86,560; 3 up to $109,280; 4 up to $132,000"
       insurance_rule: "limited or no coverage; a Botox application form exists but Botox was not shown in the program's medicine list on the page read"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: if_not_covered, medicare: unknown, medicaid: no}
       url: https://www.abbvie.com/patients/patient-assistance.html
       verified_on: "2026-09-13"
       confidence: low
@@ -250,6 +280,8 @@ programs:
       name: Lilly Cares Foundation
       income_ceiling_fpl_pct: 300
       insurance_rule: "still listed while supplies last"
+      # rules-as-code reads these, not the sentence above: commercial = never | if_not_covered | unknown
+      eligible_coverage: {commercial: unknown, medicare: unknown, medicaid: no}
       url: https://www.lillycares.com/how-to-apply
       verified_on: "2026-09-13"
     exclusions: ""

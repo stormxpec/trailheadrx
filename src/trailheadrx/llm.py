@@ -52,7 +52,11 @@ def _anthropic():
     global _client
     if _client is None:
         import anthropic
-        _client = anthropic.Anthropic(api_key=config.api_key())
+        # Long answers (a 16k-token budget) can run for minutes. Streaming keeps
+        # the connection alive while the model writes, which is what the SDK
+        # recommends for long requests; the timeout is per-attempt, and a
+        # dropped connection or timeout is retried three times with backoff.
+        _client = anthropic.Anthropic(api_key=config.api_key(), timeout=900.0, max_retries=3)
     return _client
 
 
@@ -67,12 +71,13 @@ def complete(tier: str, system: str, user: str, max_tokens: int | None = None, d
         return LLMResult(text, f"{model_id} (dry-run)", len(system.split()) + len(user.split()),
                          len(text.split()), int((time.time() - t0) * 1000), True)
 
-    resp = _anthropic().messages.create(
+    with _anthropic().messages.stream(
         model=model_id,
         max_tokens=max_tokens,
         system=system,
         messages=[{"role": "user", "content": user}],
-    )
+    ) as stream:
+        resp = stream.get_final_message()
     text = "".join(block.text for block in resp.content if getattr(block, "type", "") == "text")
     return LLMResult(text, model_id, resp.usage.input_tokens, resp.usage.output_tokens,
                      int((time.time() - t0) * 1000), False, getattr(resp, "stop_reason", "end_turn") or "end_turn")

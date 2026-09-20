@@ -15,73 +15,279 @@
   <p class="actions"><a class="btn" href="/">Try another plan or question</a> <a class="btn secondary" href="/leave">Close and sign out</a></p>
 {% else %}
   <h1>{{ job.request.drug }} and your plan</h1>
+  {% set variation = a.claims|selectattr("topic", "equalto", "variation")|list %}
+  {% set lt = wait if (wait and wait.months_high) else none %}
+  {% set lo = lt.months_low if lt else none %}{% set hi = lt.months_high if lt else none %}
+  {% set months_txt = (lo ~ '–' ~ hi) if (lt and lo and lo != hi) else (hi if lt else '') %}
+  {% set ohio = a.eligibility[0] if a.eligibility else none %}
+
   <h2>The short version</h2>
   <div class="card short">
-    <p style="margin-top:0">{{ a.summary }}</p>
-    {% if wait_text %}<p class="muted" style="font-size:16px;margin-bottom:0">{{ wait_text }}</p>{% endif %}
+    <div class="callout"><p class="lede">{{ a.summary }}</p></div>
+    {% if a.summary_points %}<ol class="points">{% for b in a.summary_points %}<li>{{ b }}</li>{% endfor %}</ol>{% endif %}
+    {% if variation %}
+    <div class="aside">
+      <div class="aside-label">Also worth noting</div>
+      <ul>{% for c in variation %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul>
+    </div>
+    {% endif %}
   </div>
 
-  <p class="small muted">Open a heading to read that part. Sections with a number in brackets are backed by your plan's own documents, listed at the end.</p>
+  {% if lt %}
+  <div class="card leadtime">
+    <div class="lt-num">{{ months_txt }}<span>months</span></div>
+    <div>
+      <strong>Estimated lead time.</strong> If you are starting from scratch, the path your plan describes could take about {{ months_txt|replace('–', ' to ') }} months before {{ a.drug or job.request.drug }} is approved.
+      <span class="small muted">{{ (lt.explanation or '')|capitalize }}. Shorter if you have already tried some of these medicines, or if you qualify for an exception.</span>
+    </div>
+  </div>
+  {% endif %}
+
+  {% macro papcell(R) %}{% if R.pap and R.pap.available and R.pap.uncertain %}<b><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a></b><span>— {{ R.pap.detail }}</span><span class="sub">The program's page does not say whether your kind of plan qualifies; call to confirm.</span>{% elif R.pap and R.pap.available %}<b><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a></b><span>— {{ R.pap.detail }}</span>{% if R.pap.conditional %}<span class="sub">Only if your plan will not cover it.</span>{% endif %}<span class="sub">Trade-off: {{ R.pap.tradeoff }}</span>{% elif R.pap %}<span class="muted">Not for your kind of plan — {{ R.pap.reason[0]|lower }}{{ R.pap.reason[1:] }}</span>{% else %}<span class="muted">Not available — no assistance program on file for this medicine.</span>{% endif %}{% endmacro %}
+
+  {% macro pathgrid(R, first_html, months, b_text) %}
+    <div class="pathrow head"><div>Path</div><div>What it takes</div><div>Estimated timing</div><div>What you pay · maker support</div></div>
+
+    <div class="pathrow">
+      <div class="pathname"><span class="ptag">A</span>Your plan's path</div>
+      <div class="pathhow">
+        {{ first_html }}
+        <span>→ your doctor requests approval ("prior authorization") → approved.</span>
+        {% if R.bridge and R.bridge.available %}<span class="sub">While you wait: <a href="{{ R.bridge.url }}" rel="noopener">{{ R.bridge.title }}</a> — {{ R.bridge.cost }}.</span>{% endif %}
+      </div>
+      <div class="pathtime"><span class="tnum">{% if months %}{{ months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span></div>
+      <div class="pathcost">{% if R.card %}{% if R.card.available %}{{ R.card.cost }} <span class="small muted">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% else %}your plan's copay <span class="small muted">(savings card not allowed on your plan type)</span>{% endif %}{% else %}your plan's copay{% endif %}</div>
+    </div>
+
+    <div class="pathrow">
+      <div class="pathname"><span class="ptag">B</span>A shorter path</div>
+      <div class="pathhow"><b>Your doctor asks for an exception</b><span>— {{ b_text }}</span></div>
+      <div class="pathtime"><span class="tnum">2<small>weeks</small></span></div>
+      <div class="pathcost">{% if R.card and R.card.available %}{{ R.card.cost }} <span class="small muted">with the <a href="{{ R.card.url }}" rel="noopener">savings card</a></span>{% else %}your plan's copay{% endif %}</div>
+    </div>
+
+    {% if rows.c %}
+    <div class="pathrow{% if not R.dtc %} na{% endif %}">
+      <div class="pathname"><span class="ptag">C</span>Skip the path altogether</div>
+      {% if R.dtc %}
+      <div class="pathhow"><b><a href="{{ R.dtc.url }}" rel="noopener">{{ R.dtc.title }}</a></b><span>— {{ R.dtc.detail }}</span><span class="sub">Trade-off: {{ R.dtc.tradeoff }}</span></div>
+      <div class="pathtime"><span class="tnum">a few<small>days</small></span></div>
+      <div class="pathcost">{{ R.dtc.cost }}</div>
+      {% else %}
+      <div class="pathhow"><span class="muted">Not available — the maker has no direct-purchase program we know of.</span></div>
+      <div class="pathtime"><span class="tnum muted">—</span></div>
+      <div class="pathcost muted">not available</div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if rows.d %}
+    <div class="pathrow{% if not (R.pap and R.pap.available) %} na{% endif %}">
+      <div class="pathname"><span class="ptag">D</span>Free medicine if you qualify</div>
+      <div class="pathhow">{{ papcell(R) }}</div>
+      {% if R.pap and R.pap.available %}
+      <div class="pathtime"><span class="tnum">weeks<small>application</small></span></div>
+      <div class="pathcost">{{ R.pap.cost }}</div>
+      {% else %}
+      <div class="pathtime"><span class="tnum muted">—</span></div>
+      <div class="pathcost muted">not available</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  {% endmacro %}
+
+  {% if ohio and ohio.allowed and 'federal' not in ohio.reason|lower %}
+    {% set b_text = 'for example if you already tried one of the medicines on another plan, or it is unsafe for you. Ohio law gives you this right: the plan must answer within 10 days, 2 if urgent.' %}
+    {% set b_short = 'Doctor asks for an exception; Ohio law: an answer within 10 days, 2 if urgent.' %}
+  {% elif ohio and 'self-funded' in ohio.reason|lower %}
+    {% set b_text = "for example if you already tried one of the medicines on another plan, or it is unsafe for you. Ohio's law does not reach a self-funded plan, but federal rules require an answer to a pre-service request within 15 days, 72 hours if urgent, and your plan has its own exception process." %}
+    {% set b_short = 'Doctor asks for an exception; federal rules: an answer within 15 days, 72 hours if urgent.' %}
+  {% else %}
+    {% set b_text = 'for example if you already tried one of the medicines on another plan, or it is unsafe for you. Your plan has its own exception process; ask member services how to file one.' %}
+    {% set b_short = "Doctor asks for an exception through the plan's own process." %}
+  {% endif %}
+
+  {% if a.routes %}
+  {% set R = {} %}{% for r in a.routes %}{% set _ = R.update({r.key: r}) %}{% endfor %}
+  <h2>Your path options to {{ a.drug or job.request.drug }}</h2>
+  <div class="card paths">
+    <p class="small muted" style="margin-top:0">Each path, top to bottom: what it takes, how long, and what it costs you. The plan's path first; the routes around it below. Times for the maker's routes are typical, not from your plan's documents. Letters are labels, not an order.</p>
+    {% set first_html %}<b>{{ (a.summary_points[0] if a.summary_points else 'Meet the plan\'s first requirement')|truncate(90) }}</b>{% endset %}
+    {{ pathgrid(R, first_html, months_txt, b_text) }}
+    {% for n in rows.notes %}<p class="small muted" style="margin-bottom:0">{{ n }}</p>{% endfor %}
+    <p class="small muted" style="margin-bottom:0">Maker programs {{ (R.card or R.dtc or R.pap or R.bridge).checked }}. Sources: {% for r in a.routes %}<a href="{{ r.url }}" rel="noopener">{{ r.title }}</a>{% if not loop.last %} · {% endif %}{% endfor %}.</p>
+  </div>
+  {% endif %}
+
+  {% if compare_paths %}
+  <h2>Your path options with the alternatives</h2>
+  <div class="card paths">
+    <p class="small muted" style="margin-top:0">The same paths for every medicine in this class, side by side: rows are the paths, columns are the medicines. Timing in row A is your plan's path from scratch; costs are with each maker's own programs where your plan type allows them. Paperwork and waiting only — which medicine is right for you is your doctor's call.</p>
+    <div class="scroller">
+    <table class="mx">
+      <tr><th class="path">Path</th>{% for c in compare_paths %}<th class="drug{% if c.mine %} mine{% endif %}">{{ c.drug }}{% if c.mine %} <span class="pill ok">yours</span>{% endif %}</th>{% endfor %}</tr>
+      <tr>
+        <td class="path"><span class="ptag">A</span><span>Your plan's path</span></td>
+        {% for c in compare_paths %}{% set R = c.R %}
+        <td class="{% if c.mine %}mine{% endif %}">
+          <span class="tnum">{% if c.months %}{{ c.months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span>
+          <span class="cost">{% if R.card and R.card.available %}{{ R.card.cost_short }}{% if R.card.note %}*{% endif %}{% else %}your plan's copay{% endif %}</span>
+          {% if R.card and R.card.available %}<span class="req">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% elif R.card %}<span class="req">savings card not allowed on your plan type</span>{% endif %}
+          {% if c.note %}<span class="req">Plan rules for this medicine not loaded yet.</span>
+          {% else %}
+          <span class="req">{% if c.approval is true %}Approval needed{% elif c.approval is false %}No approval needed{% else %}Approval not stated{% endif %}{% if c.short %} · {{ c.short }}{% endif %}</span>
+          {% if R.bridge and R.bridge.available %}<span class="sub">While you wait: <a href="{{ R.bridge.url }}" rel="noopener">{{ R.bridge.cost }}</a></span>{% endif %}
+          <details class="cell"><summary>What it takes</summary>
+            <div>{% if c.try_first %}<b>Try first:</b> {{ c.try_first }}{% if c.trial %} ({{ c.trial }}){% endif %}{% else %}No trial requirement stated.{% endif %}
+            {% if c.steps %}<br><b>Lead time:</b> {% for x in c.steps %}{{ x.what }}{% if x.days %} ({{ x.days }} days){% endif %}{% if not loop.last %}; then {% endif %}{% endfor %}, plus about two weeks for the plan's review.{% endif %}
+            {% if c.notes %}<br><b>Note:</b> {{ c.notes }}{% endif %}</div>
+          </details>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      <tr>
+        <td class="path"><span class="ptag">B</span><span>A shorter path</span><span class="req">{{ b_short }}</span></td>
+        {% for c in compare_paths %}{% set R = c.R %}
+        <td class="{% if c.mine %}mine{% endif %}">
+          <span class="tnum">2<small>weeks</small></span>
+          <span class="cost">{% if R.card and R.card.available %}{{ R.card.cost_short }}{% if R.card.note %}*{% endif %}{% else %}your plan's copay{% endif %}</span>
+          {% if R.card and R.card.available %}<span class="req">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% if rows.c %}
+      <tr>
+        <td class="path"><span class="ptag">C</span><span>Skip the path altogether</span></td>
+        {% for c in compare_paths %}{% set R = c.R %}
+        <td class="{% if c.mine %}mine{% endif %}">
+          {% if R.dtc %}<span class="tnum">a few<small>days</small></span><span class="cost">{{ R.dtc.cost_short }}</span><span class="req"><a href="{{ R.dtc.url }}" rel="noopener">{{ R.dtc.title }}</a> — cash; nothing counts toward your deductible.</span>
+          {% else %}<span class="na">Not available</span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endif %}
+      {% if rows.d %}
+      <tr>
+        <td class="path"><span class="ptag">D</span><span>Free medicine if you qualify</span></td>
+        {% for c in compare_paths %}{% set R = c.R %}
+        <td class="{% if c.mine %}mine{% endif %}">
+          {% if R.pap and R.pap.available and R.pap.uncertain %}<span class="na">Not stated for your kind of plan</span><span class="req"><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a> — call to confirm.</span>
+          {% elif R.pap and R.pap.available %}<span class="tnum">weeks<small>application</small></span><span class="cost">free if you qualify</span><span class="req"><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a>{% if R.pap.conditional %} — only if your plan will not cover it{% endif %}</span>
+          {% elif R.pap %}<span class="na">Not for your kind of plan</span><span class="req"><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a> — {{ R.pap.reason[0]|lower }}{{ R.pap.reason[1:] }}</span>
+          {% else %}<span class="na">Not available</span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endif %}
+    </table>
+    </div>
+    {% for c in compare_paths %}{% if c.R.card and c.R.card.note %}<p class="small muted" style="margin-bottom:0">* {{ c.drug }}: {{ c.R.card.note }}.</p>{% endif %}{% endfor %}
+    <p class="small muted" style="margin-bottom:0">"/mo" is per monthly fill as the maker states it; for a medicine taken only when needed, one fill may last longer than a month.</p>
+    {% for n in rows.notes %}<p class="small muted" style="margin-bottom:0">{{ n }}</p>{% endfor %}
+    <p class="small muted" style="margin-bottom:0">Maker programs checked: {% for c in compare_paths %}{% if c.R %}{{ c.drug }} {{ (c.R.card or c.R.dtc or c.R.pap or c.R.bridge).checked|replace('checked ', '') }}{% if not loop.last %} · {% endif %}{% endif %}{% endfor %}.</p>
+  </div>
+  {% endif %}
+
+
+  {% if plan_rows is not none %}
+  <h2>What if I had a different plan?</h2>
+  <div class="card paths">
+    {% if plan_rows|length < 2 %}
+    <p class="small muted" style="margin:0">We do not yet hold another {{ job.request.lob.replace('_', ' ') }} plan's rules for {{ job.request.drug }}, so there is nothing to compare. As more plans are added this will fill in.</p>
+    {% else %}
+    <p class="small muted" style="margin-top:0">{{ job.request.drug }} under each {{ job.request.lob.replace('_', ' ') }} plan we hold the published rules for, read the same way: does it need approval, what must be tried first, and the lead time from scratch. Your plan is first. This is each carrier's standard rulebook; an employer can change it — see below.</p>
+    <div class="scroller">
+    <table class="mx">
+      <tr><th class="path">Plan</th>{% for c in plan_rows %}<th class="drug{% if c.mine %} mine{% endif %}">{{ c.payer }}{% if c.mine %} <span class="pill ok">yours</span>{% endif %}</th>{% endfor %}</tr>
+      <tr>
+        <td class="path"><span class="ptag">A</span><span>The plan's path</span></td>
+        {% for c in plan_rows %}
+        <td class="{% if c.mine %}mine{% endif %}">
+          {% if c.ok %}
+          <span class="tnum">{% if c.months %}{{ c.months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span>
+          <span class="req">{% if c.approval is true %}Approval needed{% elif c.approval is false %}No approval needed{% else %}Approval not stated{% endif %}{% if c.short %} · {{ c.short }}{% endif %}</span>
+          {% if c.try_first or c.steps %}
+          <details class="cell"><summary>What it takes</summary>
+            <div>{% if c.try_first %}<b>Try first:</b> {{ c.try_first }}{% if c.trial %} ({{ c.trial }}){% endif %}{% endif %}
+            {% if c.steps %}<br><b>Lead time:</b> {% for x in c.steps %}{{ x.what }}{% if x.days %} ({{ x.days }} days){% endif %}{% if not loop.last %}; then {% endif %}{% endfor %}, plus about two weeks for the plan's review.{% endif %}
+            {% if c.notes %}<br><b>Note:</b> {{ c.notes }}{% endif %}</div>
+          </details>
+          {% endif %}
+          {% else %}<span class="na">{{ c.reason }}</span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+    </table>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if job.request.lob in ('commercial', 'marketplace') %}
+  <div class="card">
+    <div class="callout">
+      <h3 style="margin:0 0 6px">Find out what your employer's plan does</h3>
+      <p class="lede" style="margin:0 0 6px">It may differ from the health plan's default policy.</p>
+      <p style="margin:0 0 6px"><b>If your employer covers your benefits, it may have additional rules that apply to your medications.</b></p>
+      <p style="margin:0">Everything above comes from the rulebook each health plan publishes. If your coverage is through an employer, the employer may have changed that rulebook — dropped the "try first" steps, added some, taken the medicine off the list, or handed it to an outside "alternative funding" company. Nothing published tells you which, so here is how to find out, easiest first.</p>
+    </div>
+    <ol class="points" style="margin:0">
+      <li><b>Look it up yourself.</b> Your pharmacy benefits card (the one you got at enrollment; it may be separate from your medical card) names a website — Caremark, Optum Rx, Express Scripts, or similar. Sign in and search for {{ job.request.drug }}. The letters next to it are your plan's real rules: <b>PA</b> means your doctor must get approval first, <b>ST</b> means you must try other medicines first, <b>NC</b> means not covered. If you do not have the card, ask your employer's HR or benefits office for the site and your member ID.</li>
+      <li><b>Ask one question.</b> Call the member services number on the card, or ask HR: "Does our plan use the standard step-therapy rules for {{ job.request.drug }}, or our own?" If the answer is "our own," ask what they are.</li>
+      <li><b>Ask for the plan booklet.</b> HR must give you the plan's official description (the "Summary Plan Description") and its prescription-drug section if you ask; that is federal law. Search it for "step therapy," "prior authorization," and "alternative funding."</li>
+      <li><b>Optional: check whether your employer pays its own claims.</b> This matters because Ohio's step-therapy law only protects you if the plan is insured, not if the employer self-funds it. Ask HR, or look up your employer at <a href="https://www.efast.dol.gov/5500Search/" rel="noopener">the U.S. Department of Labor's Form 5500 search</a> (employers with 100 or more people in the plan file one; a "Schedule A" naming an insurer for health benefits usually means insured).</li>
+    </ol>
+    <p class="small muted" style="margin-bottom:0"><b>One thing to watch for.</b> If the pharmacy says {{ job.request.drug }} is "not covered" and someone refers you to an outside company that will "help you apply for free medicine from the maker," that is an alternative funding program. Some makers now refuse those applications, so ask HR directly, and get the plan's decision in writing: a written denial is what lets you request an exception and, if refused, appeal. Sources: <a href="https://nastad.org/sites/default/files/2025-07/resource-afp-issue-brief-2025.pdf" rel="noopener">NASTAD issue brief on alternative funding programs (2025)</a>; <a href="https://www.dol.gov/sites/dolgov/files/EBSA/researchers/analysis/health-and-welfare/identifying-self-insured-health-plans-regulatory-data-sources.pdf" rel="noopener">U.S. DOL, identifying self-insured plans from Form 5500</a>. Checked Sep 20, 2026.</p>
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if a.routes and (not compare_paths or plan_rows is none) %}
+  <div class="card option-card">
+    {% if not compare_paths %}
+    <form method="post" action="/a/{{ job.id }}/compare">
+      <label><input type="checkbox" name="go" value="1" required> <b>Compare comparable medications</b></label>
+      <button type="submit" class="btn">Load</button>
+      <span class="small muted">About a minute.</span>
+    </form>
+    {% endif %}
+    {% if plan_rows is none %}
+    <form method="post" action="/a/{{ job.id }}/plans">
+      <label><input type="checkbox" name="go" value="1" required> <b>What if I had a different plan?</b></label>
+      <button type="submit" class="btn">Load</button>
+      <span class="small muted">About a minute.</span>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <h2>The details</h2>
+  <p class="small muted toolbar"><span>{% if expand %}<a href="/a/{{ job.id }}">Collapse all</a>{% else %}<a href="/a/{{ job.id }}?expand=1">Expand all</a>{% endif %}</span><span>Statements with a number in brackets are backed by your plan's own documents, listed at the end.</span></p>
   {% for title, group in sections %}
-  <details class="sec"{% if loop.first %} open{% endif %}>
-    <summary><h2>{{ title }}</h2><span class="count">{{ group|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>{{ title }}</h2><span class="count">{{ group|length }}</span><span class="toggle"></span></summary>
     <div class="card"><ul>{% for c in group %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul></div>
   </details>
   {% endfor %}
 
-  {% if a.other_routes %}
-  <details class="sec" open>
-    <summary><h2>Other ways to get it — often quicker, with a different cost picture</h2><span class="count">{{ a.other_routes|length }}</span></summary>
-    <div class="card">
-      <p class="small muted" style="margin-top:0">These come from the drug maker, not your plan: a free first fill while you wait, a savings card once approved, buying direct and skipping the plan, or free medicine if income qualifies. Each is faster or cheaper in a different way, and each has a trade-off noted beside it.</p>
-      <ul>{% for r in a.other_routes %}<li>{{ r }}</li>{% endfor %}</ul>
-    </div>
-  </details>
-  {% endif %}
-
   {% if a.eligibility %}
-  <details class="sec">
-    <summary><h2>Good to know for your kind of plan</h2><span class="count">{{ a.eligibility|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>Good to know for your kind of plan</h2><span class="count">{{ a.eligibility|length }}</span><span class="toggle"></span></summary>
     <div class="card"><ul>{% for e in a.eligibility %}<li>{{ e.reason }}</li>{% endfor %}</ul></div>
   </details>
   {% endif %}
 
-  {% if table and table[1] %}
-  <details class="sec" open>
-    <summary><h2>How your plan treats the other medicines in this class</h2></summary>
-  <div class="card">
-    <p class="small muted" style="margin-top:0">This compares the paperwork and waiting, not the medicines themselves. Which one is right for you is your doctor's call; how hard your plan makes each one is worth knowing before that conversation.</p>
-    <table>
-      <tr><th></th><th>Medicine</th><th>Approval</th><th>Try first</th><th>Wait from zero</th><th>Source</th></tr>
-      {% for r in table[1] %}
-      <tr>
-        <td>{% if r.drug.split()[0]|lower == job.request.drug.split()[0]|lower %}<span class="arrow">→</span>{% endif %}</td>
-        <td><strong>{{ r.drug }}</strong></td>
-        {% if r.status == "ok" %}
-        <td>{% if r.approval_required is true %}needed{% elif r.approval_required is false %}not needed{% else %}not stated{% endif %}</td>
-        <td>{{ r.must_try_first }}{% if r.trial_length %} <span class="muted">({{ r.trial_length }})</span>{% endif %}{% if r.notes %}<br><small class="muted">{{ r.notes }}</small>{% endif %}</td>
-        <td>{% if r.months_high %}about {% if r.months_low and r.months_low != r.months_high %}{{ r.months_low }}–{% endif %}{{ r.months_high }} months{% else %}no estimate{% endif %}</td>
-        <td class="small muted">{{ r.citations[0] if r.citations else "" }}</td>
-        {% else %}
-        <td colspan="4" class="muted">{{ r.reason }}</td>
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </table>
-  </div>
-  </details>
-  {% endif %}
 
   {% if a.not_in_documents %}
-  <details class="sec">
-    <summary><h2>Your plan's documents don't say</h2><span class="count">{{ a.not_in_documents|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>Your plan's documents don't say</h2><span class="count">{{ a.not_in_documents|length }}</span><span class="toggle"></span></summary>
     <div class="card"><ul>{% for x in a.not_in_documents %}<li>{{ x }}</li>{% endfor %}</ul></div>
   </details>
   {% endif %}
 
   {% if a.left_out %}
-  <details class="sec">
-    <summary><h2>What we left out, and why</h2><span class="count">{{ a.left_out|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>What we left out, and why</h2><span class="count">{{ a.left_out|length }}</span><span class="toggle"></span></summary>
   <div class="card">
     <p class="small muted" style="margin-top:0">Everything above is backed by a page of your plan's documents you can check. {% if a.left_out|length == 1 %}One more statement{% else %}{{ a.left_out|length }} more statements{% endif %} could not be matched to the documents closely enough to stand behind, so {% if a.left_out|length == 1 %}it is{% else %}they are{% endif %} listed here as unconfirmed. Nothing above depends on {% if a.left_out|length == 1 %}it{% else %}them{% endif %}; if one matters to you, it is a good question for your doctor's office.</p>
     <ul>{% for c in a.left_out %}<li><span class="pill">unconfirmed</span> {{ c.text }}</li>{% endfor %}</ul>
@@ -90,20 +296,29 @@
   {% endif %}
 
   {% if a.warnings %}
-  <details class="sec">
-    <summary><h2>One more thing</h2><span class="count">{{ a.warnings|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>One more thing</h2><span class="count">{{ a.warnings|length }}</span><span class="toggle"></span></summary>
     <div class="card note"><ul>{% for w in a.warnings %}<li>{{ w }}</li>{% endfor %}</ul></div>
   </details>
   {% endif %}
 
-  <details class="sec">
-    <summary><h2>How to use this</h2></summary>
+  {% if table and table[1] %}
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>The comparison, as a table</h2><span class="toggle"></span></summary>
+    <div class="card">
+    <p class="small muted" style="margin-top:0">The same class comparison in table form, with the plan document each row came from.</p>
+    </div>
+  </details>
+  {% endif %}
+
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>How to use this</h2><span class="toggle"></span></summary>
   <div class="card"><p style="margin:0">This is a plain-words reading of your health plan's own published rules. It is not the final word on your case, and it is not medical advice. Think of it as a map for the conversation with your doctor's office and your health plan: it tells you what they will ask for, how long it may take, and where you have room to push. That is also why we show things like how the same plan treats people in other states, and faster ways to get the medicine your doctor thinks is right for you. Your doctor's office sends in the request; your health plan makes the decision; you can ask questions and ask for exceptions at every step.</p></div>
   </details>
 
   {% if a.citations %}
-  <details class="sec">
-    <summary><h2>Where this comes from</h2><span class="count">{{ a.citations|length }}</span></summary>
+  <details class="sec"{% if expand %} open{% endif %}>
+    <summary><h2>Where this comes from</h2><span class="count">{{ a.citations|length }}</span><span class="toggle"></span></summary>
     <div class="card"><ol class="sources">{% for c in a.citations %}<li>{{ c }}</li>{% endfor %}</ol></div>
   </details>
   {% endif %}

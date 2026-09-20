@@ -51,6 +51,34 @@ def copay_card_allowed(line_of_business: str) -> Decision:
                                 "to lower what you pay at the pharmacy. Each maker sets its own terms.")
 
 
+def assistance_allowed(line_of_business: str, pap: dict | None) -> Decision:
+    """Whether a maker's free-medicine (patient assistance) program is open to
+    someone with this kind of coverage. Read from the program record's
+    `eligible_coverage` (set by hand from the program's own page), never from
+    the prose. Most of these programs are for people with no insurance or on
+    Medicare; a few also take commercially insured members whose plan will
+    not cover the medicine."""
+    e = (pap or {}).get("eligible_coverage") or {}
+    if line_of_business in ("medicaid_mco", "medicaid_ffs"):
+        if e.get("medicaid") in (True, "yes"):
+            return Decision(True, "G4", "Open to Medicaid members per the program's page.")
+        return Decision(False, "G4", "Makers' free-medicine programs do not take Medicaid members; Medicaid already covers the medicine at little or no cost.")
+    if line_of_business == "medicare_advantage":
+        m = e.get("medicare")
+        if m in (False, "no"):
+            return Decision(False, "G4", "This program does not take Medicare members.")
+        if m in (True, "yes"):
+            return Decision(True, "G4", "Open to Medicare Part D members who meet the income limit; some ask you to show an Extra Help denial first.")
+        return Decision(True, "G4", "The program's page does not say clearly whether Medicare members qualify; call to confirm.")
+    # commercial, marketplace, self-funded employer
+    c = e.get("commercial", "unknown")
+    if c == "never":
+        return Decision(False, "G4", "This program is for people with no insurance or on Medicare; commercially insured members are not eligible.")
+    if c == "if_not_covered":
+        return Decision(True, "G4", "Only if your plan will not cover the medicine (a denial or an exclusion) and you meet the income limit.")
+    return Decision(True, "G4", "The program's page does not say clearly whether commercially insured members qualify; call to confirm.")
+
+
 def ohio_step_therapy_law_applies(line_of_business: str, self_funded: bool | None) -> Decision:
     """Whether ORC 3901.832 (step therapy exemption rights) protects this plan."""
     e = _elig()

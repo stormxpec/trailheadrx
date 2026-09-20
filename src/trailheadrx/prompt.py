@@ -53,11 +53,16 @@ def route(question: str) -> tuple[str, llm.LLMResult]:
 ANSWER_SCHEMA = {
     "type": "object",
     "properties": {
-        "summary": {"type": "string", "description": "Two or three plain sentences a patient can read first. Start with the answer, not the background."},
+        "summary": {"type": "string", "description": "One plain sentence a patient can read first: the single most important thing the plan requires. Never mention 'passages' or 'documents'."},
+        "summary_points": {
+            "type": "array",
+            "description": "Two to four short bullets (each under 20 words) giving the path in order: what the plan checks first, what happens if that is not met, what the doctor sends. Name the specific medicines where the policy lists them (up to three, then 'and others'). The 'approval' bullet must describe the trial the doctor documents (which medicines, how long) — never a continuation, renewal, or combination rule. Rules for a different diagnosis, strength, or age (for example cluster headache, 100 mg, under 18) are `variation` claims, not summary bullets. Never say what the passages do not cover — that belongs in not_in_documents.",
+            "items": {"type": "string"},
+        },
         "prior_authorization_required": {"type": ["boolean", "null"]},
         "wait_estimate": {
             "type": "object",
-            "description": "If the passages require trials of other medicines first, estimate how long the whole path could take for someone starting from zero: add the required trial lengths as if done one after another, plus a couple of weeks for the plan's review. Null if the passages give no trial lengths.",
+            "description": "Always fill this when the passages state any trial length (56 days, 8 weeks, 2 months, 3 months): estimate how long the whole path could take for someone starting from zero by adding the required trial lengths as if done one after another, plus a couple of weeks for the plan's review. Use null for months only when the passages give no trial length at all.",
             "properties": {
                 "months_low": {"type": ["integer", "null"]},
                 "months_high": {"type": ["integer", "null"]},
@@ -82,7 +87,7 @@ ANSWER_SCHEMA = {
         "not_in_documents": {"type": "array", "items": {"type": "string"},
                              "description": "Parts of the question the passages do not answer."},
     },
-    "required": ["summary", "claims", "not_in_documents"],
+    "required": ["summary", "summary_points", "wait_estimate", "claims", "not_in_documents"],
 }
 
 
@@ -98,15 +103,18 @@ def build_system_prompt() -> str:
           "'didn't work or caused side effects', never 'failed' or 'failed trial'. Say 'your doctor', not 'the "
           "prescriber'. Say 'approval' for prior authorization, and explain the term once in parentheses the first "
           "time only. No policy jargon without a plain phrase in its place; drug names are fine. Short sentences. "
-          "Speak to the reader as 'you'. Lead with what they have to do, not with what the policy is called.\n\n"
+          "Speak to the reader as 'you'. Lead with what they have to do, not with what the policy is called. "
+          "Never write about 'the passages' or 'the documents' in the summary or claims; if something is not "
+          "covered, put it in not_in_documents and say nothing about it elsewhere.\n\n"
           "Already handled elsewhere (do NOT list these under not_in_documents): Ohio's step-therapy exception law, "
           "manufacturer copay-card eligibility, patient assistance income rules, and manufacturer direct-purchase "
           "options. Those are added to the answer by code from separate sources.\n\n"
           "Advocacy: Trailhead Rx is on the patient's side. If the passages show that the same policy treats "
           "some members differently — by state, plan type, age, or strength — say so plainly in a claim with "
           "topic `variation`, name which members get the lighter requirement, and note that such differences "
-          "usually come from state law, not from anything about the patient. If the passages describe an "
-          "exception or exemption process, state it as something the patient can ask for."
+          "usually come from state law, not from anything about the patient. Rules that apply only to a different "
+          "diagnosis or strength of the same medicine (cluster headache, 100 mg) are also `variation` claims. If the "
+          "passages describe an exception or exemption process, state it as something the patient can ask for."
     )
 
 

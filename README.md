@@ -72,7 +72,7 @@ The site's own governance lives in `config.yaml` under `web:` — questions per 
 
 ```
 config.yaml          models, paths, chunking, retrieval, thresholds — the one place to tune
-docs/                ARCHITECTURE (map), FLUENCY (vocabulary), BRIEF, DECISIONS, concepts/
+docs/                ARCHITECTURE (map), FLUENCY (vocabulary), LESSONS (what live runs taught us), BRIEF, DECISIONS, concepts/
 data/                drugs_migraine.yaml — the migraine drug list
 corpus/policies/     manifest.yaml (committed) + downloaded documents (NOT committed)
 corpus/programs/     manufacturer / assistance program records (session 3)
@@ -100,6 +100,7 @@ src/trailheadrx/     the application — see "Which file is which box" below
 | Evals | `evals/run.py` + `evals/scenarios.yaml` | golden set, regression |
 | The whole request path | `pipeline.py` | chain |
 | The form, access code, rate limit, spend cap | `web/app.py`, `web/gate.py`, `web/jobs.py` | guardrails at the edge, background jobs |
+| Plan menu, card-name aliases, "not listed" path | `web/plans.py` + `data/plan_aliases.yaml` | metadata filtering made visible |
 
 ## Not in this repo
 

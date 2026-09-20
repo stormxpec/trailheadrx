@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from .. import config
 from ..audit import read_all
 
-IN_FLIGHT_RESERVE_USD = 0.25   # assumed cost of a job that has not finished yet (answer + comparison)
+IN_FLIGHT_RESERVE_USD = 0.30   # assumed cost of a job that has not finished yet (answer + comparisons)
 
 
 @dataclass
@@ -33,6 +33,7 @@ class Job:
     created: float = field(default_factory=time.time)
     answer: object = None           # pipeline.Answer
     table: tuple | None = None      # (class name, rows) when compare was requested
+    plans: list | None = None       # rows, one per other held plan, when plans was requested
     trace: dict | None = None       # the audit record for this answer
     error: str = ""
 
@@ -42,6 +43,7 @@ class JobRunner:
         w = config.CONFIG.get("web", {})
         self.ttl = 60 * int(w.get("job_ttl_minutes", 60))
         self._pool = ThreadPoolExecutor(max_workers=workers or int(w.get("job_workers", 2)))
+        self._side = ThreadPoolExecutor(max_workers=2)   # class comparisons, run beside the main answer
         self._jobs: dict[str, Job] = {}
         self._lock = threading.Lock()
 
@@ -78,17 +80,89 @@ class JobRunner:
         job.status = "running"
         r = job.request
         try:
-            job.answer = answer(r["question"], r["payer"], r["lob"], r["drug"],
-                                self_funded=r.get("self_funded"), use_judge=True)
-            if r.get("compare") and job.answer.outcome == "answered":
+            cached = _cache_get(r)
+            if cached:
+                job.answer, job.table, job.plans, job.trace = cached
+                job.status = "done"
+                return
+            # The class comparison does not depend on the main answer, so it
+            # runs at the same time rather than after: ~1 minute saved.
+            table_future = plans_future = None
+            if r.get("compare"):
                 from ..compare import compare_class
-                name, rows, _calls = compare_class(r["drug"], r["payer"], r["lob"])
-                job.table = (name, rows)
+                table_future = self._side.submit(compare_class, r["drug"], r["payer"], r["lob"])
+            if r.get("plans"):
+                from ..compare import compare_plans
+                plans_future = self._side.submit(compare_plans, r["drug"], r["payer"], r["lob"])
+            job.answer = _with_one_retry(lambda: answer(r["question"], r["payer"], r["lob"], r["drug"],
+                                                        self_funded=r.get("self_funded"), use_judge=True))
+            if table_future is not None:
+                name, rows, _calls = table_future.result()
+                if job.answer.outcome == "answered":
+                    job.table = (name, rows)
+            if plans_future is not None:
+                rows, _calls = plans_future.result()
+                if job.answer.outcome == "answered":
+                    job.plans = rows
             job.trace = _find_trace(job.answer.trace_id)
             job.status = "done"
+            if job.answer.outcome == "answered":
+                _cache_put(r, (job.answer, job.table, job.plans, job.trace))
         except Exception as e:   # the page must never hang on an exception in a worker
             job.error = f"{type(e).__name__}: {e}"
             job.status = "failed"
+
+
+def _with_one_retry(fn):
+    """A timed-out or dropped model connection is retried inside the SDK; if
+    it still fails, try the whole answer once more before giving up, since a
+    transient network fault should not cost the visitor their answer."""
+    try:
+        return fn()
+    except Exception as e:
+        name = type(e).__name__
+        if name in ("APITimeoutError", "APIConnectionError"):
+            time.sleep(3)
+            return fn()
+        raise
+
+
+# ---- answer cache ------------------------------------------------------------
+# The menu of questions is finite (plan × medicine × preset question), so a
+# repeat of the same request can be served from memory instead of re-running
+# a minute of model calls. Only requests with NO free text are cached — free
+# text is the one thing a visitor writes, and it is never stored. Entries
+# expire after `cache_hours` (config) so a corpus refresh shows up.
+
+_CACHE: dict[tuple, tuple[float, tuple]] = {}
+_CACHE_LOCK = threading.Lock()
+
+
+def _cache_key(r: dict) -> tuple | None:
+    if r.get("free_text"):
+        return None
+    return (r["payer"], r["lob"], r["drug"], r.get("self_funded"), r["question"], bool(r.get("compare")), bool(r.get("plans")))
+
+
+def _cache_get(r: dict):
+    k = _cache_key(r)
+    if k is None:
+        return None
+    ttl = 3600 * float(config.CONFIG.get("web", {}).get("cache_hours", 24))
+    with _CACHE_LOCK:
+        hit = _CACHE.get(k)
+        if hit and time.time() - hit[0] < ttl:
+            return hit[1]
+        _CACHE.pop(k, None)
+    return None
+
+
+def _cache_put(r: dict, value) -> None:
+    k = _cache_key(r)
+    if k is None:
+        return
+    with _CACHE_LOCK:
+        _CACHE[k] = (time.time(), value)
 
 
 def _find_trace(trace_id: str) -> dict | None:

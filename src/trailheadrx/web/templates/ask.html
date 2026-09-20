@@ -1,52 +1,70 @@
 {% extends "base.html" %}
+{% from "illos.html" import person_at_laptop, doctor, analysis %}
 {% block body %}
-<h1>What does your plan require?</h1>
-<p class="lead">Pick your health plan and the medicine your doctor has in mind, then choose the question closest to what you are trying to figure out — or write your own in plain words. You will get what the plan's own policy says, what it takes to get there, and other ways to get the medicine.</p>
+<section class="hero">
+  <div class="hero-text">
+    <h1>Figuring out your insurance plan's rules for a medication is hard.</h1>
+    <p class="lead">Trailhead Rx reads your plan's actual policy and shows you what it takes to get the medication your doctor has in mind.</p>
+    <details class="more"><summary>What this does</summary>
+      <p>Your plan may require you to try other medications before you can get the one you want. Trailhead Rx outlines the steps your doctor needs to follow, how long it usually takes, and how to appeal if you get turned down.</p>
+      <p>It also shows the routes around the plan — other ways to get your medication, including free first fills, savings cards, buying direct from the manufacturer, and assistance programs — with what each one costs and what it gives up.</p>
+      <p class="small">Right now it covers Ohio plans and migraine medicines. The rules it reads are the real ones the plans publish, and every statement is tied to the page it came from. It is not medical advice and does not decide your case.</p>
+    </details>
+  </div>
+  <div class="hero-art">{{ person_at_laptop(300) }}</div>
+</section>
+
 {% if error %}<div class="card bad">{{ error }}</div>{% endif %}
 <form method="post" action="/ask" class="card form">
-  <div class="row">
-    <div>
-      <label for="payer">Health plan</label>
-      <select id="payer" name="payer" required>
-        {% for value, label in payers %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+  <div class="step">
+    <div class="step-body">
+      <label for="plan">Your health plan</label>
+      <select id="plan" name="plan" required>
+        {% for c in plans %}<option value="{{ c.value }}">{{ c.label }}</option>{% endfor %}
+        <option value="other">My plan isn't listed — I'll type its name below</option>
       </select>
-      <small class="muted">Only plans whose rules we have loaded are listed, with the kinds of plan we hold for each. More are being added.</small>
-    </div>
-    <div>
-      <label for="lob">Kind of plan</label>
-      <select id="lob" name="lob" required>
-        {% for key, label in lobs %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
-      </select>
-    </div>
-  </div>
-  <div class="row">
-    <div>
-      <label for="drug">Medicine</label>
-      <select id="drug" name="drug" required>
-        {% for d in drugs %}<option value="{{ d.brand }}">{{ d.brand }} ({{ d.generic }}) — {{ d.group|lower }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
+      <small class="muted">Only plans whose rules we have loaded are listed, with the kind of plan we hold for each. Use the name on your insurance card.</small>
+      <input type="text" id="plan_other" name="plan_other" placeholder="If your plan isn't listed: the plan name from your card (for example, Meritain, UMR, Cigna)" autocomplete="off">
       <label for="self_funded">Employer plan: is it self-funded?</label>
       <select id="self_funded" name="self_funded">
         <option value="unknown">I don't know (most people don't)</option>
         <option value="no">No</option>
         <option value="yes">Yes</option>
       </select>
-      <small class="muted">Self-funded employer plans follow federal rules (ERISA) instead of Ohio's step-therapy law. HR or the plan's member services line can tell you.</small>
+      <small class="muted">Self-funded employer plans follow federal rules (ERISA) instead of Ohio's step-therapy law. HR or the plan's member services line can tell you. Skip this if your plan isn't through an employer.</small>
     </div>
   </div>
 
-  <label for="preset">What do you want to know?</label>
-  <select id="preset" name="preset">
-    {% for key, text in presets %}<option value="{{ key }}">{{ text }}</option>{% endfor %}
-  </select>
+  <div class="step">
+    <div class="step-body">
+      <label for="drug">Medicine</label>
+      <select id="drug" name="drug" required>
+        {% for d in drugs %}<option value="{{ d.brand }}">{{ d.brand }} ({{ d.generic }}) — {{ d.group|lower }}</option>{% endfor %}
+      </select>
+      <label for="preset">What do you want to know?</label>
+      <select id="preset" name="preset">
+        {% for key, text in presets %}<option value="{{ key }}">{{ text }}</option>{% endfor %}
+      </select>
+      <label for="question">Anything to add, in your own words <span class="muted" style="font-weight:400">(optional)</span></label>
+      <textarea id="question" name="question" placeholder="For example: I already tried topiramate on my old plan. — or — I'd pay cash if it's faster."></textarea>
+      <small class="muted">Please don't include your name, member ID, date of birth, or medical history. The question is checked and refused if it looks like it does.</small>
+    </div>
+    <div class="step-art">{{ doctor(170) }}</div>
+  </div>
 
-  <label for="question">Anything to add, in your own words <span class="muted" style="font-weight:400">(optional)</span></label>
-  <textarea id="question" name="question" placeholder="For example: I already tried topiramate on my old plan. — or — I'd pay cash if it's faster."></textarea>
-  <small class="muted">Please don't include your name, member ID, date of birth, or medical history. The question is checked and refused if it looks like it does.</small>
+  <div class="step">
+    <div class="step-body">
+      <label class="option">
+        <input type="checkbox" name="compare" value="1">
+        <span>
+          <strong>Include comparable medications</strong>
+          <span class="small">See which ones your plan makes easiest to get — the paperwork and waiting for each, side by side. Not which is best for you; that is your doctor's call. Adds about a minute.</span>
+        </span>
+      </label>
+    </div>
+    <div class="step-art">{{ analysis(170) }}</div>
+  </div>
 
-  <label class="check"><input type="checkbox" name="compare" value="1"> Include all the medicines in this class, comparing timing and cost of each path (takes about a minute longer)</label>
   <button type="submit">Learn what my plan's rules dictate</button>
 </form>
 <p class="small muted">Budget today: ${{ '%.2f'|format(spend.today_usd) }} of ${{ '%.2f'|format(spend.cap_usd) }} used. <a href="/leave">Sign out</a></p>

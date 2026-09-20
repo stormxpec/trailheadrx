@@ -35,7 +35,7 @@ from ..guardrails import input_guardrails
 from ..pipeline import SECTION_HEADINGS
 from ..retrieve import load_drugs, open_db
 from ..rules import eligibility_summary
-from . import gate
+from . import gate, plans
 from .jobs import JobRunner
 
 app = FastAPI(title="Trailhead Rx", docs_url=None, redoc_url=None)
@@ -152,7 +152,7 @@ def home(request: Request):
     if not _signed_in(request):
         return _page(request, "enter.html")
     spend = gate.spend_today(runner.in_flight_reserve_usd())
-    return _page(request, "ask.html", payers=_payers(), drugs=_drugs(), lobs=LOBS, presets=PRESETS, spend=spend)
+    return _page(request, "ask.html", plans=plans.choices(), drugs=_drugs(), presets=PRESETS, spend=spend)
 
 
 @app.post("/enter")
@@ -176,12 +176,12 @@ def leave():
 
 
 @app.post("/ask")
-def ask(request: Request, payer: str = Form(...), lob: str = Form(...), drug: str = Form(...),
+def ask(request: Request, plan: str = Form(...), plan_other: str = Form(""), drug: str = Form(...),
         preset: str = Form("try_first"), question: str = Form(""), self_funded: str = Form("unknown"),
         compare: str = Form("")):
     if not _signed_in(request):
         return RedirectResponse("/", status_code=303)
-    ctx = dict(payers=_payers(), drugs=_drugs(), lobs=LOBS, presets=PRESETS)
+    ctx = dict(plans=plans.choices(), drugs=_drugs(), presets=PRESETS)
 
     # The question is a chosen one, the visitor's own words, or both.
     chosen = dict(PRESETS).get(preset, "") if preset != "other" else ""
@@ -207,21 +207,81 @@ def ask(request: Request, payer: str = Form(...), lob: str = Form(...), drug: st
 
     # Gate 3: input guardrails, before anything is queued. The pipeline runs
     # them again; this just refuses fast without spending a worker.
-    if lob not in {k for k, _ in LOBS}:
-        return _page(request, "ask.html", 400, error="Please pick a plan type.", **ctx, spend=spend)
-    g = input_guardrails(drug, question)
+    g = input_guardrails(drug, question if plan != "other" else f"{question} {plan_other}")
     if not g.passed:
-        return _page(request, "refused.html", 200, reason=g.reason,
-                     eligibility=[e.__dict__ for e in eligibility_summary(lob)])
+        return _page(request, "refused.html", 200, reason=g.reason, eligibility=[])
+
+    # The plan: a menu choice, or a typed name matched against the alias table.
+    if plan == "other":
+        choice = plans.match_alias(plan_other)
+        if choice is None:
+            plans.record_request(plan_other)
+            return _page(request, "notlisted.html", 200, plan_name=plan_other.strip()[:80])
+    else:
+        choice = plans.parse(plan)
+        if choice is None:
+            return _page(request, "ask.html", 400, error="Please pick your health plan.", **ctx, spend=spend)
 
     sf = {"yes": True, "no": False}.get(self_funded)
-    job = runner.submit({"question": question.strip(), "payer": payer, "lob": lob, "drug": drug,
-                         "self_funded": sf, "compare": bool(compare)})
+    if choice.self_funded is True:
+        sf = True                        # the card name settles it (Meritain, UMR)
+    job = runner.submit({"question": question.strip(), "payer": choice.payer, "lob": choice.lob, "drug": drug,
+                         "self_funded": sf, "compare": bool(compare), "free_text": bool(own)})
     return RedirectResponse(f"/a/{job.id}", status_code=303)
 
 
+@app.post("/a/{job_id}/compare")
+def add_compare(request: Request, job_id: str):
+    """The 'Compare comparable medications' button on an answer page: re-run
+    the same request with the comparison on. The main answer comes back from
+    the cache when there is no free text, so only the comparison costs time."""
+    if not _signed_in(request):
+        return RedirectResponse("/", status_code=303)
+    job = runner.get(job_id)
+    if job is None or job.status != "done":
+        return RedirectResponse(f"/a/{job_id}", status_code=303)
+    allowed, _ = limiter.allow(_ip(request))
+    if not allowed:
+        return RedirectResponse(f"/a/{job_id}", status_code=303)
+    new = runner.submit(dict(job.request, compare=True))
+    return RedirectResponse(f"/a/{new.id}", status_code=303)
+
+
+@app.post("/a/{job_id}/retry")
+def retry(request: Request, job_id: str):
+    """Re-run a failed job with the same request, so a network fault does not
+    send the visitor back to the form."""
+    if not _signed_in(request):
+        return RedirectResponse("/", status_code=303)
+    job = runner.get(job_id)
+    if job is None or job.status != "failed":
+        return RedirectResponse(f"/a/{job_id}" if job else "/", status_code=303)
+    allowed, _ = limiter.allow(_ip(request))
+    if not allowed:
+        return RedirectResponse(f"/a/{job_id}", status_code=303)
+    new = runner.submit(dict(job.request))
+    return RedirectResponse(f"/a/{new.id}", status_code=303)
+
+
+@app.post("/a/{job_id}/plans")
+def add_plans(request: Request, job_id: str):
+    """'What if I had a different plan?' — re-run the same request with the
+    cross-plan comparison on. Same pattern as /compare; the main answer
+    comes back from the cache."""
+    if not _signed_in(request):
+        return RedirectResponse("/", status_code=303)
+    job = runner.get(job_id)
+    if job is None or job.status != "done":
+        return RedirectResponse(f"/a/{job_id}", status_code=303)
+    allowed, _ = limiter.allow(_ip(request))
+    if not allowed:
+        return RedirectResponse(f"/a/{job_id}", status_code=303)
+    new = runner.submit(dict(job.request, plans=True))
+    return RedirectResponse(f"/a/{new.id}", status_code=303)
+
+
 @app.get("/a/{job_id}", response_class=HTMLResponse)
-def show(request: Request, job_id: str):
+def show(request: Request, job_id: str, expand: str = ""):
     if not _signed_in(request):
         return RedirectResponse("/", status_code=303)
     job = runner.get(job_id)
@@ -233,8 +293,124 @@ def show(request: Request, job_id: str):
         return _page(request, "waiting.html", 500, job=job)
     a = job.answer
     return _page(request, "result.html", job=job, a=a, sections=_sections(a), wait_text=_wait_text(a),
+                 expand=(expand == "1"), compare_paths=_compare_paths(job), wait=_wait(job),
+                 rows=_path_rows(job), plan_rows=_plan_rows(job),
                  table=job.table, trace=job.trace or {},
                  chunks=(job.trace or {}).get("stages", []) and _packet_from_trace(job.trace))
+
+
+def _wait(job) -> dict | None:
+    """The lead-time estimate. When the class comparison ran, use its row for
+    this medicine: the months there are computed in code from the trial
+    lengths the extractor pulled out (compare.months_from_steps), the same
+    rule for every medicine. Otherwise use the model's own estimate from the
+    answer, which is built the same way but by the model."""
+    if job.table and job.table[1]:
+        mine = job.request["drug"].split()[0].lower()
+        for r in job.table[1]:
+            if r.status == "ok" and r.months_high and r.drug.split()[0].lower() == mine:
+                tries = "; ".join(f"{x.get('what')} ({x.get('days')} days)" for x in r.steps if x.get("days"))
+                return {"months_low": r.months_low, "months_high": r.months_high,
+                        "explanation": f"{tries}, plus about two weeks for the plan's review"}
+    w = job.answer.wait_estimate
+    if w and w.get("months_high"):
+        return w
+    return None
+
+
+def _plan_rows(job) -> list[dict] | None:
+    """Cells for 'What if I had a different plan?': this plan first, then
+    each other held plan of the same kind. None when not requested; an empty
+    list when we hold no other plan of this kind."""
+    if job.plans is None:
+        return None
+    from ..compare import months_from_steps
+    out = []
+    w = _wait(job) or {}
+    me = None
+    if job.table and job.table[1]:
+        mine = job.request["drug"].split()[0].lower()
+        me = next((r for r in job.table[1] if r.status == "ok" and r.drug.split()[0].lower() == mine), None)
+    out.append({"payer": job.request["payer"], "mine": True, "ok": True,
+                "months": _months_txt(w.get("months_low"), w.get("months_high")),
+                "approval": me.approval_required if me else None,
+                "short": (me.short if me else (job.answer.summary_points[0] if job.answer.summary_points else "")),
+                "try_first": me.must_try_first if me else "", "trial": me.trial_length if me else "",
+                "steps": me.steps if me else [], "notes": me.notes if me else "", "reason": ""})
+    for r in job.plans:
+        ok = r.status == "ok"
+        out.append({"payer": r.payer, "mine": False, "ok": ok, "months": _months_txt(r.months_low, r.months_high) if ok else "",
+                    "approval": r.approval_required if ok else None, "short": (r.short or r.must_try_first[:40]) if ok else "",
+                    "try_first": r.must_try_first if ok else "", "trial": r.trial_length if ok else "",
+                    "steps": r.steps if ok else [], "notes": r.notes if ok else "", "reason": "" if ok else r.reason})
+    return out
+
+
+def _months_txt(lo, hi) -> str:
+    if not hi:
+        return ""
+    return f"{lo}–{hi}" if lo and lo != hi else str(hi)
+
+
+def _path_rows(job) -> dict:
+    """All four paths are always drawn, so the reader sees what is NOT open
+    to them and why (Ben, fix33: "show those which are not available based
+    on the plan"). A row that applies to nobody on the page is kept, greyed,
+    with the reason in the cell; the notes below the grid say it once in a
+    sentence. Reasons come from rules-as-code (copay_card_allowed,
+    assistance_allowed), never from the model."""
+    R_all = [{r["key"]: r for r in job.answer.routes}] if job.answer.routes else []
+    R_all += [c["R"] for c in _compare_paths(job)]
+    any_c = any(R.get("dtc") for R in R_all)
+    any_d = any(R.get("pap") and R["pap"]["available"] for R in R_all)
+    notes = []
+    if not any_d and any(R.get("pap") for R in R_all):
+        lob = job.request["lob"]
+        if lob in ("medicaid_mco", "medicaid_ffs"):
+            notes.append("Makers' free-medicine programs do not take Medicaid members; Medicaid covers the medicine at little or no cost.")
+        else:
+            notes.append("For these medicines, the makers' free-medicine programs take people with no insurance or on Medicare, not commercially insured members — shown greyed so you know they exist and why they do not apply to you.")
+    if not any_c:
+        notes.append("None of these makers sells the medicine directly for cash, so there is no \"skip the path\" option for this class.")
+    return {"c": True, "d": True, "notes": notes}
+
+
+def _compare_paths(job) -> list[dict]:
+    """One entry per medicine in the class comparison, with everything the
+    page needs to draw the same four-path grid it draws for the asked-about
+    medicine: the plan's first requirement, months from scratch, and the
+    maker's routes (bridge/card/dtc/pap) keyed by name."""
+    if not job.table or not job.table[1]:
+        return []
+    from ..programs import routes_structured
+    lob = job.request["lob"]
+    mine = job.request["drug"].split()[0].lower()
+    out = []
+    for r in job.table[1]:
+        R = {x["key"]: x for x in routes_structured(r.drug, lob)}
+        months = ""
+        if r.status == "ok" and r.months_high:
+            months = f"{r.months_low}–{r.months_high}" if r.months_low and r.months_low != r.months_high else str(r.months_high)
+        ok = r.status == "ok"
+        out.append({"drug": r.drug, "mine": r.drug.split()[0].lower() == mine, "months": months,
+                    "note": "" if ok else r.reason, "R": R,
+                    "try_first": r.must_try_first if ok else "", "trial": r.trial_length if ok else "",
+                    "short": (r.short or r.must_try_first[:40]) if ok else "", "notes": r.notes if ok else "",
+                    "steps": r.steps if ok else [], "trial_days": r.trial_days if ok else 0,
+                    "approval": r.approval_required if ok else None})
+    out.sort(key=lambda c: not c["mine"])   # the asked-about medicine first, so it is the first column on a phone
+    return out
+
+
+@app.on_event("startup")
+def _warm_up() -> None:
+    """Load the embedding model once at start so the first visitor does not
+    pay the 10–20 s it takes; the index is built at deploy, not on request."""
+    try:
+        from ..ingest import embed
+        embed(["warm up"])
+    except Exception:
+        pass   # dry-run or missing model: the first request will load it
 
 
 def _packet_from_trace(trace: dict) -> list[dict]:

@@ -17,7 +17,7 @@ from .guardrails import input_guardrails, output_guardrails
 from .prompt import route, draft
 from .retrieve import build_packet
 from .rules import rules_text, eligibility_summary
-from .programs import other_routes
+from .programs import other_routes, routes_structured
 from .verify import verify
 
 
@@ -60,6 +60,8 @@ class Answer:
     other_routes: list[str] = field(default_factory=list)
     drug: str = ""
     left_out: list[dict] = field(default_factory=list)   # claims dropped by the verifier: shown, labeled unconfirmed
+    summary_points: list[str] = field(default_factory=list)
+    routes: list[dict] = field(default_factory=list)     # structured version of other_routes for the web
 
     def render(self) -> str:
         """Plain-text rendering for the CLI, laid out for a person, not a reviewer:
@@ -78,7 +80,7 @@ class Answer:
         def cite(c):
             return "  " + "".join(f"[{n}]" for n in c.get("citations", []))
 
-        lines = ["THE SHORT VERSION", self.summary or ""]
+        lines = ["THE SHORT VERSION", self.summary or ""] + [f"  • {b}" for b in self.summary_points]
         if self.wait_estimate and self.wait_estimate.get("months_high"):
             lo, hi = self.wait_estimate.get("months_low"), self.wait_estimate.get("months_high")
             rng = f"about {hi} months" if not lo or lo == hi else f"about {lo} to {hi} months"
@@ -212,7 +214,9 @@ def answer(question: str, payer: str, line_of_business: str, drug: str, self_fun
     return Answer("answered", "", final.get("summary", ""), final["claims"], final.get("not_in_documents", []),
                   elig, cites, final.get("warnings", []), final.get("framing", ""), qtype, trace.id, dry,
                   wait_estimate=final.get("wait_estimate"), other_routes=other_routes(drug, line_of_business),
-                  drug=(packet.drug or {}).get("brand", drug), left_out=pruned)
+                  drug=(packet.drug or {}).get("brand", drug), left_out=pruned,
+                  summary_points=[str(b) for b in (final.get("summary_points") or [])][:4],
+                  routes=routes_structured(drug, line_of_business))
 
 
 def _dedupe_sources(passage_cites: list[str]) -> tuple[list[str], dict[int, int]]:

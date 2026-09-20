@@ -20,7 +20,7 @@ from datetime import date, datetime
 import yaml
 
 from . import config
-from .rules import copay_card_allowed
+from .rules import assistance_allowed, copay_card_allowed
 
 FRESH_DAYS = 45   # program terms change monthly; flag anything older than this
 
@@ -92,11 +92,58 @@ def other_routes(drug: str, line_of_business: str) -> list[str]:
         inc = f"household income at or below {ceiling}% of the federal poverty level" if ceiling else \
               (f"income limits: {p['income_table']}" if p.get("income_table") else "income limits apply")
         pname = p.get("name") or "the maker's assistance program"
+        pap_ok = assistance_allowed(line_of_business, p)
         lines.append(f"If cost is the wall: {pname} provides {brand} free to people with "
-                     f"{inc}. Who qualifies: {p.get('insurance_rule', 'see the program page')}. ({_age_note(p)}; {p.get('url')})")
+                     f"{inc}. Who qualifies: {p.get('insurance_rule', 'see the program page')}. "
+                     f"For your kind of plan: {pap_ok.reason} ({_age_note(p)}; {p.get('url')})")
 
     if rec.get("exclusions"):
         lines.append(f"Fine print: {rec['exclusions']}.")
     if rec.get("phone"):
         lines.append(f"Questions about any of these: {maker} support line {rec['phone']}.")
     return lines
+
+
+def routes_structured(drug: str, line_of_business: str) -> list[dict]:
+    """The same facts as other_routes(), shaped for a picture: one card per
+    route with a stage label ('while you wait', 'once approved', 'skip the
+    plan', 'if cost is the wall'), the cost in a few words, the trade-off,
+    the checked-on date, and whether the plan type allows it."""
+    rec = load_programs().get(drug.split()[0].lower())
+    if not rec or rec.get("status") == "discontinued":
+        return []
+    maker = rec.get("maker", "the drug maker")
+    card_ok = copay_card_allowed(line_of_business)
+    out: list[dict] = []
+    b = rec.get("bridge")
+    if b:
+        out.append({"key": "bridge", "stage": "While you wait", "title": b.get("name", "Free first fill"),
+                    "cost": "$0, one time", "detail": b.get("terms", ""), "tradeoff": "Only while the plan reviews; ask the doctor's office to enroll you.",
+                    "available": bool(card_ok.allowed), "reason": "" if card_ok.allowed else card_ok.reason,
+                    "checked": _age_note(b), "url": b.get("url")})
+    c = rec.get("copay_card")
+    if c:
+        out.append({"key": "card", "stage": "Once approved", "title": c.get("name", "Savings card"),
+                    "cost": _money(c.get("you_pay")) or "lower cost", "detail": (f"up to {c['annual_max']}" if _money(c.get("annual_max")) else "") +
+                    (f"; through {c['expires']}" if _money(c.get("expires")) else ""), "tradeoff": "Needs the plan to cover it first.",
+                    "available": bool(card_ok.allowed), "reason": "" if card_ok.allowed else card_ok.reason,
+                    "cost_short": _money(c.get("you_pay_short")) or _money(c.get("you_pay")) or "lower cost", "note": c.get("you_pay_note", ""),
+                    "checked": _age_note(c), "url": c.get("url"), "low_confidence": c.get("confidence") == "low"})
+    d = rec.get("dtc")
+    if d and _money(d.get("price_text")):
+        out.append({"key": "dtc", "stage": "Skip the plan", "title": d.get("name", "Buy direct"),
+                    "cost": d["price_text"], "cost_short": _money(d.get("price_short")) or d["price_text"], "detail": d.get("how", ""),
+                    "tradeoff": "Nothing counts toward your deductible, and it does not count as a 'try' with your plan.",
+                    "available": True, "reason": "", "checked": _age_note(d), "url": d.get("url")})
+    p = rec.get("pap")
+    if p:
+        ceiling = p.get("income_ceiling_fpl_pct")
+        inc = f"income at or below {ceiling}% of the poverty level" if ceiling else (p.get("income_table") or "income limits apply")
+        pap_ok = assistance_allowed(line_of_business, p)
+        out.append({"key": "pap", "stage": "If cost is the wall", "title": p.get("name") or "Assistance program",
+                    "cost": "free if you qualify", "detail": f"{inc}. {p.get('insurance_rule', '')}", "tradeoff": "An application with income proof; takes weeks.",
+                    "available": bool(pap_ok.allowed), "reason": pap_ok.reason, "uncertain": "call to confirm" in pap_ok.reason,
+                    "conditional": "if_not_covered" in str((p.get("eligible_coverage") or {}).get("commercial")) and line_of_business not in ("medicare_advantage", "medicaid_mco", "medicaid_ffs"),
+                    "checked": _age_note(p), "url": p.get("url"), "low_confidence": p.get("confidence") == "low"})
+    return out
+
