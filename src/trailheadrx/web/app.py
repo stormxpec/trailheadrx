@@ -341,7 +341,7 @@ def show(request: Request, job_id: str, expand: str = ""):
     a = job.answer
     return _page(request, "result.html", job=job, a=a, sections=_sections(a), wait_text=_wait_text(a),
                  expand=(expand == "1"), compare_paths=_compare_paths(job), wait=_wait(job),
-                 rows=_path_rows(job), plan_rows=_plan_rows(job), focus=_focus(job),
+                 rows=_path_rows(job), plan_rows=_plan_rows(job), focus=_focus(job), peer_months=_peer_months(job),
                  table=job.table, trace=job.trace or {},
                  chunks=(job.trace or {}).get("stages", []) and _packet_from_trace(job.trace))
 
@@ -369,15 +369,15 @@ def _wait(job) -> dict | None:
 # lookup, not a judgment: the model never decides what to emphasize.
 FOCUS = {
     "try_first": {"paths": ["A"], "open": ["What you need to try first"],
-                  "text": "You asked what to try first. That is path A — the plan's own steps — and the lead time above is how long they take from scratch."},
+                  "text": "Your question was about what to try first. That is path A, the plan's standard route; the lead time above is how long it takes from scratch."},
     "doctor":    {"paths": ["A"], "open": ["What your doctor needs to show"],
-                  "text": "You asked what your doctor needs to show. That is path A; the specifics are under \"What your doctor needs to show\" below."},
+                  "text": "Your question was about what your doctor needs to show. That is path A, the plan's standard route; the specifics are under \"What your doctor needs to show\" below."},
     "how_long":  {"paths": ["B"], "open": ["Timing and appeals"],
-                  "text": "You asked how long, and whether there is a faster way. Path A is the plan's clock; path B is the faster way when you qualify for it."},
+                  "text": "Your question was about timing. Path A is the plan's standard route and how long it takes from scratch. Path B is a possible way to shorten it, if you qualify."},
     "appeal":    {"paths": ["B", "E"], "open": ["Timing and appeals"],
-                  "text": "You asked about a denial. From where you are, path B (an exception request) is the fastest route, and path E is the appeal, with the plan's deadlines under \"Timing and appeals\" below."},
+                  "text": "Your question was about a denial. From where you are, path B (asking for an exception) is the quickest route, and path E is the appeal; the plan's deadlines are under \"Timing and appeals\" below."},
     "cost":      {"paths": ["C", "D"], "open": [],
-                  "text": "You asked about cost. The right-hand column is what you pay on each path; paths C and D are the routes that do not go through the plan at all."},
+                  "text": "Your question was about cost. The right-hand column is what you pay on each path; paths C and D are the routes that do not go through the plan at all."},
 }
 
 
@@ -456,18 +456,62 @@ def _compare_paths(job) -> list[dict]:
     out = []
     for r in job.table[1]:
         R = {x["key"]: x for x in routes_structured(r.drug, lob)}
-        months = ""
-        if r.status == "ok" and r.months_high:
-            months = f"{r.months_low}–{r.months_high}" if r.months_low and r.months_low != r.months_high else str(r.months_high)
         ok = r.status == "ok"
-        out.append({"drug": r.drug, "mine": r.drug.split()[0].lower() == mine, "months": months,
-                    "note": "" if ok else r.reason, "R": R,
+        is_mine = r.drug.split()[0].lower() == mine
+        months = _months_txt(r.months_low, r.months_high) if ok else ""
+        note = "" if ok else _cell_reason(r)
+        short = (r.short or r.must_try_first[:40]) if ok else ""
+        approval = r.approval_required if ok else None
+        if is_mine and not ok:
+            # The asked-about medicine's column must never contradict the
+            # verified answer at the top of the page: the comparison's own
+            # re-reading of the same document can fail its second check
+            # (shared documents, neighbouring drugs) while the full answer
+            # passed verification. Fall back to that answer.
+            w = job.answer.wait_estimate or {}
+            months = _months_txt(w.get("months_low"), w.get("months_high"))
+            short = (job.answer.summary_points[0] if job.answer.summary_points else "")[:60]
+            approval = True if job.answer.summary_points else None
+            note = ""
+        out.append({"drug": r.drug, "mine": is_mine, "months": months, "note": note, "R": R,
                     "try_first": r.must_try_first if ok else "", "trial": r.trial_length if ok else "",
-                    "short": (r.short or r.must_try_first[:40]) if ok else "", "notes": r.notes if ok else "",
+                    "short": short, "notes": r.notes if ok else "",
                     "steps": r.steps if ok else [], "trial_days": r.trial_days if ok else 0,
-                    "approval": r.approval_required if ok else None})
+                    "approval": approval})
     out.sort(key=lambda c: not c["mine"])   # the asked-about medicine first, so it is the first column on a phone
     return out
+
+
+def _cell_reason(r) -> str:
+    """Plain words for a comparison cell we could not fill, by what actually
+    happened — never a generic 'not loaded' when the document is loaded."""
+    if r.status == "not_in_corpus":
+        return r.reason.split(". ")[0].rstrip(".") + "."      # the first sentence says why; the rest is for the full page
+    if r.status == "no_passages":
+        return "The plan documents we hold do not mention this medicine."
+    return ("We could not read this plan's rule for this medicine reliably, so this cell is left blank "
+            "rather than guessed. The plan's own document is in the sources below.")
+
+
+def _peer_months(job) -> str:
+    """When a lead time cannot be computed, the honest comparison is the other
+    columns on the same page: the range of months across the other medicines
+    (class comparison) and other plans (plan comparison) that did compute.
+    Empty when nothing on the page has a number."""
+    los, his = [], []
+    cells = [c for c in _compare_paths(job) if not c["mine"]]
+    cells += [c for c in (_plan_rows(job) or []) if not c["mine"] and c["ok"]]
+    for c in cells:
+        m = c.get("months") or ""
+        parts = m.replace("–", "-").split("-")
+        try:
+            lo, hi = int(parts[0]), int(parts[-1])
+        except (ValueError, IndexError):
+            continue
+        los.append(lo); his.append(hi)
+    if not his:
+        return ""
+    return _months_txt(min(los), max(his))
 
 
 @app.on_event("startup")

@@ -43,6 +43,8 @@
   </div>
   {% endif %}
 
+  {% macro notime(peer) %}<span class="tnum">—<small>timing not published</small></span><span class="req">This plan does not publish how long the tries take.{% if peer %} Similar plans take {{ peer }} months.{% else %} Plan on months, not weeks.{% endif %}</span>{% endmacro %}
+
   {% macro papcell(R) %}{% if R.pap and R.pap.available and R.pap.uncertain %}<b><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a></b><span>— {{ R.pap.detail }}</span><span class="sub">The program's page does not say whether your kind of plan qualifies; call to confirm.</span>{% elif R.pap and R.pap.available %}<b><a href="{{ R.pap.url }}" rel="noopener">{{ R.pap.title }}</a></b><span>— {{ R.pap.detail }}</span>{% if R.pap.conditional %}<span class="sub">Only if your plan will not cover it.</span>{% endif %}<span class="sub">Trade-off: {{ R.pap.tradeoff }}</span>{% elif R.pap %}<span class="muted">Not for your kind of plan — {{ R.pap.reason[0]|lower }}{{ R.pap.reason[1:] }}</span>{% else %}<span class="muted">Not available — no assistance program on file for this medicine.</span>{% endif %}{% endmacro %}
 
   {% macro pathgrid(R, first_html, months, b_text) %}
@@ -55,7 +57,7 @@
         <span>→ your doctor requests approval ("prior authorization") → approved.</span>
         {% if R.bridge and R.bridge.available %}<span class="sub">While you wait: <a href="{{ R.bridge.url }}" rel="noopener">{{ R.bridge.title }}</a> — {{ R.bridge.cost }}.</span>{% endif %}
       </div>
-      <div class="pathtime"><span class="tnum">{% if months %}{{ months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span></div>
+      <div class="pathtime">{% if months %}<span class="tnum">{{ months }}<small>months</small></span>{% else %}{{ notime(peer_months) }}{% endif %}</div>
       <div class="pathcost">{% if R.card %}{% if R.card.available %}{{ R.card.cost }} <span class="small muted">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% else %}your plan's copay <span class="small muted">(savings card not allowed on your plan type)</span>{% endif %}{% else %}your plan's copay{% endif %}</div>
     </div>
 
@@ -123,7 +125,7 @@
   {% if a.routes %}
   {% set R = {} %}{% for r in a.routes %}{% set _ = R.update({r.key: r}) %}{% endfor %}
   <h2>Your path options to {{ a.drug or job.request.drug }}</h2>
-  {% if focus.text %}<div class="callout pointer"><b>Start here.</b> {{ focus.text }}</div>{% endif %}
+  {% if focus.text %}<div class="callout pointer"><b>{{ focus.text.split(". ")[0] }}.</b> {{ focus.text.split(". ", 1)[1] }}</div>{% endif %}
   <div class="card paths">
     <p class="small muted" style="margin-top:0">Each path, top to bottom: what it takes, how long, and what it costs you. The plan's path first; the routes around it below. Times for the maker's routes are typical, not from your plan's documents. Letters are labels, not an order.</p>
     {% set first_html %}<b>{{ (a.summary_points[0] if a.summary_points else 'Meet the plan\'s first requirement')|truncate(90) }}</b>{% endset %}
@@ -134,7 +136,7 @@
   {% endif %}
 
   {% if compare_paths %}
-  <h2>Your path options with the alternatives</h2>
+  <h2>Your path options with alternative comparable medications</h2>
   <div class="card paths">
     <p class="small muted" style="margin-top:0">The same paths for every medicine in this class, side by side: rows are the paths, columns are the medicines. Timing in row A is your plan's path from scratch; costs are with each maker's own programs where your plan type allows them. Paperwork and waiting only — which medicine is right for you is your doctor's call.</p>
     <div class="scroller">
@@ -144,10 +146,10 @@
         <td class="path"><span class="ptag">A</span><span>Your plan's path</span></td>
         {% for c in compare_paths %}{% set R = c.R %}
         <td class="{% if c.mine %}mine{% endif %}">
-          <span class="tnum">{% if c.months %}{{ c.months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span>
+          {% if c.note %}<span class="tnum">—</span>{% elif c.months %}<span class="tnum">{{ c.months }}<small>months</small></span>{% else %}{{ notime(peer_months) }}{% endif %}
           <span class="cost">{% if R.card and R.card.available %}{{ R.card.cost_short }}{% if R.card.note %}*{% endif %}{% else %}your plan's copay{% endif %}</span>
           {% if R.card and R.card.available %}<span class="req">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% elif R.card %}<span class="req">savings card not allowed on your plan type</span>{% endif %}
-          {% if c.note %}<span class="req">Plan rules for this medicine not loaded yet.</span>
+          {% if c.note %}<span class="na">{{ c.note }}</span>
           {% else %}
           <span class="req">{% if c.approval is true %}Approval needed{% elif c.approval is false %}No approval needed{% else %}Approval not stated{% endif %}{% if c.short %} · {{ c.short }}{% endif %}</span>
           {% if R.bridge and R.bridge.available %}<span class="sub">While you wait: <a href="{{ R.bridge.url }}" rel="noopener">{{ R.bridge.cost }}</a></span>{% endif %}
@@ -219,7 +221,7 @@
         {% for c in plan_rows %}
         <td class="{% if c.mine %}mine{% endif %}">
           {% if c.ok %}
-          <span class="tnum">{% if c.months %}{{ c.months }}<small>months</small>{% else %}—<small>not stated</small>{% endif %}</span>
+          {% if c.months %}<span class="tnum">{{ c.months }}<small>months</small></span>{% else %}{{ notime(peer_months) }}{% endif %}
           <span class="req">{% if c.approval is true %}Approval needed{% elif c.approval is false %}No approval needed{% else %}Approval not stated{% endif %}{% if c.short %} · {{ c.short }}{% endif %}</span>
           {% if c.try_first or c.steps %}
           <details class="cell"><summary>What it takes</summary>

@@ -161,3 +161,28 @@ def test_refresh_email_is_optional(monkeypatch):
     from trailheadrx import refresh
     monkeypatch.delenv("RESEND_API_KEY", raising=False)
     assert refresh.send_email("s", "b") is False
+
+
+def test_lookback_window_is_not_a_trial_length():
+    """Aetna 3481-E: 'a 56-day supply of one preventive in the past 730 days'.
+    The model once returned the 730-day window as a step, and the grid showed
+    Nurtec at 30–32 months (fix41). A step longer than any real try is treated
+    as unstated, not summed."""
+    from trailheadrx.compare import months_from_steps
+    lo, hi, days = months_from_steps([{"what": "one preventive", "days": 56}, {"what": "look-back", "days": 730}])
+    assert (lo, hi, days) == (2, 3, 56)
+    lo, hi, days = months_from_steps([{"what": "two triptans", "days": 180}, {"what": "window", "days": 730}])
+    assert days == 180 and hi <= 8
+    assert months_from_steps([{"what": "window only", "days": 730}]) == (None, None, 0)
+
+
+def test_payer_match_ignores_place_and_generic_words():
+    from trailheadrx.retrieve import _payer_matches
+    assert _payer_matches("Medical Mutual of Ohio", "Medical Mutual of Ohio")
+    assert not _payer_matches("Medical Mutual of Ohio", "Anthem / Elevance (Ohio) — CarelonRx")
+    assert not _payer_matches("Medical Mutual of Ohio", "Anthem / Elevance — CarelonRx Medical Drug")
+    assert _payer_matches("Aetna (CVS Caremark criteria)", "Aetna")
+    assert _payer_matches("Aetna", "Aetna (CVS Caremark criteria)")
+    assert _payer_matches("UnitedHealthcare", "UnitedHealthcare / Optum Rx")
+    assert not _payer_matches("Humana (Part D)", "UnitedHealthcare / Optum Rx")
+    assert _payer_matches("CareSource (Ohio Medicaid)", "CareSource (Ohio Medicaid)")

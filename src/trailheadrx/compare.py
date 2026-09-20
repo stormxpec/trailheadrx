@@ -55,10 +55,13 @@ EXTRACT_SYSTEM = (
     "(56 days; 8 weeks = 56; 2 months = 60; 3 months = 90). Leave out continuation or renewal rules (what must be shown "
     "to keep the medicine after starting it), rules for a different diagnosis (such as cluster headache), and "
     "combination rules. days is null when no length is stated. An empty list means no try is required. Do not add up "
-    "the days yourself; the app does that."
+    "the days yourself; the app does that. A look-back window is NOT a trial length: 'a 56-day supply in the past "
+    "730 days' or 'two fills in the last 180 days' means days: 56 (or 30 per fill), never 730 or 180. When the plan "
+    "accepts alternatives ('two triptans OR one preventive'), list only the shortest alternative, not both."
 )
 
 REVIEW_DAYS = 14   # the plan's own decision time, added on top of the trials
+MAX_STEP_DAYS = 180   # longer than any single required try in the corpus; beyond it is a look-back window
 
 
 def months_from_steps(steps: list[dict]) -> tuple[int | None, int | None, int]:
@@ -70,7 +73,15 @@ def months_from_steps(steps: list[dict]) -> tuple[int | None, int | None, int]:
     days = 0
     for x in steps:
         if isinstance(x, dict) and isinstance(x.get("days"), (int, float)):
-            days += int(x["days"])
+            d = int(x["days"])
+            if d > MAX_STEP_DAYS:
+                # No plan asks for one try that long; this is a look-back
+                # window ("in the past 730 days") misread as a trial length.
+                # Treat it as unstated rather than sum it into a 30-month
+                # lead time (Aetna/Nurtec, fix41).
+                x["days"] = None
+                continue
+            days += d
     if days <= 0:
         return None, None, 0
     low = max(1, round(days / 30))

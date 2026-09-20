@@ -142,7 +142,7 @@ def test_compare_button_adds_comparison(client):
     r2 = client.post(f"/a/{job_id}/compare", data={"go": "1"}, follow_redirects=False)
     assert r2.status_code == 303 and r2.headers["location"] != r.headers["location"]
     page2 = _wait(client, r2.headers["location"], seconds=120)
-    assert "Your path options with the alternatives" in page2.text
+    assert "Your path options with alternative comparable medications" in page2.text
     assert 'class="mx"' in page2.text and "Skip the path altogether" in page2.text      # matrix, with row C (LillyDirect)
     # every path is drawn; the ones a plan type rules out are greyed with the reason (Lilly Cares on commercial)
     assert "Free medicine if you qualify" in page2.text and "Not for your kind of plan" in page2.text
@@ -232,9 +232,36 @@ def test_question_points_at_a_path(client):
     r = client.post("/ask", data={"plan": "UnitedHealthcare|commercial|", "drug": "Emgality", "preset": "appeal"},
                     follow_redirects=False)
     page = _wait(client, r.headers["location"])
-    assert "Start here." in page.text and "You asked about a denial" in page.text
+    assert "Your question was about a denial" in page.text and "Start here" not in page.text
     assert "Appeal the denial" in page.text                                   # row E only for the appeal question
     r2 = client.post("/ask", data={"plan": "UnitedHealthcare|commercial|", "drug": "Emgality", "preset": "cost"},
                      follow_redirects=False)
     page2 = _wait(client, r2.headers["location"])
-    assert "You asked about cost" in page2.text and "Appeal the denial" not in page2.text
+    assert "Your question was about cost" in page2.text and "Appeal the denial" not in page2.text
+
+
+def test_own_column_never_contradicts_the_answer():
+    """fix41: the comparison's re-read of the asked-about medicine failed its
+    second check (Zavzpret under Aetna), and the grid showed a dash next to a
+    2–3 month answer at the top of the page. The own column falls back to
+    the verified answer; other failed cells say what happened."""
+    from types import SimpleNamespace as NS
+    from trailheadrx.web.app import _compare_paths, _peer_months
+    ok = NS(drug="Nurtec ODT", status="ok", months_low=2, months_high=3, must_try_first="two triptans", trial_length="",
+            short="2 triptans", notes="", steps=[{"what": "two triptans", "days": 56}], trial_days=56, approval_required=True)
+    bad = NS(drug="Zavzpret", status="unverified", months_low=None, months_high=None, must_try_first="", trial_length="",
+             short="", notes="", steps=[], trial_days=0, approval_required=None, reason="judge said no")
+    missing = NS(drug="Ubrelvy", status="not_in_corpus", months_low=None, months_high=None, must_try_first="", trial_length="",
+                 short="", notes="", steps=[], trial_days=0, approval_required=None,
+                 reason="Aetna publishes its rules for Ubrelvy, and we know where they are, but we have not loaded that document yet. We will add it.")
+    answer = NS(wait_estimate={"months_low": 2, "months_high": 3}, summary_points=["Your plan first checks two triptans"], routes=[])
+    job = NS(request={"drug": "Zavzpret", "lob": "commercial", "payer": "Aetna"}, table=("gepants", [ok, bad, missing]),
+             answer=answer, plans=None)
+    cells = {c["drug"]: c for c in _compare_paths(job)}
+    assert cells["Zavzpret"]["months"] == "2–3" and cells["Zavzpret"]["note"] == ""
+    assert cells["Zavzpret"]["short"].startswith("Your plan first checks")
+    assert "could not read" in cells["Zavzpret"]["note"] or cells["Zavzpret"]["note"] == ""
+    assert "left blank" not in cells["Nurtec ODT"]["note"] and cells["Nurtec ODT"]["months"] == "2–3"
+    assert cells["Ubrelvy"]["note"] == "Aetna publishes its rules for Ubrelvy, and we know where they are, but we have not loaded that document yet."
+    assert "not loaded" not in cells["Zavzpret"]["note"]
+    assert _peer_months(job) == "2–3"

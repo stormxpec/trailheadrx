@@ -73,12 +73,25 @@ class PlanMatch:
     reason: str = ""
 
 
+# Words that name a place or a kind of company, not a carrier: matching on
+# them made "Medical Mutual of Ohio" hit "Anthem / Elevance (Ohio)" and report
+# that Medical Mutual "does not publish" a policy it was never asked about.
+_PAYER_STOPWORDS = {"ohio", "health", "healthcare", "plan", "plans", "medical", "insurance", "company", "group",
+                    "criteria", "standard", "also", "used", "medicaid", "medicare", "advantage", "commercial"}
+
+
 def _payer_matches(query: str, payer: str) -> bool:
     q = query.lower()
     p = payer.lower()
-    # Any significant word of the query appearing in the manifest payer name.
-    words = [w for w in re.split(r"[^a-z0-9]+", q) if len(w) >= 4]
-    return any(w in p for w in words) or q in p
+    if q in p:
+        return True
+    # The carrier's name is what comes before any "(...)", " / " or " — ";
+    # every one of its distinctive words must appear in the manifest name.
+    head = re.split(r"\(|/|—", q)[0]
+    words = [w for w in re.split(r"[^a-z0-9]+", head) if len(w) >= 4 and w not in _PAYER_STOPWORDS]
+    if not words:   # a name made only of common words: fall back to the whole thing
+        words = [w for w in re.split(r"[^a-z0-9]+", head) if len(w) >= 4]
+    return bool(words) and all(w in p for w in words)
 
 
 def _scope_matches(drug_rec: dict | None, drug: str, scope: str) -> bool:
