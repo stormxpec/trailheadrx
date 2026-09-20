@@ -17,10 +17,16 @@ eval:             ## run the golden scenarios and print the scorecard
 test:             ## unit tests for rules-as-code and guardrails (no model calls)
 	$(PY) -m pytest -q tests
 
+refresh:          ## re-fetch every source, re-index what changed (no email unless configured)
+	$(PY) -m trailheadrx refresh
+
+sweep:            ## precompute the menu, report drift (costs money; --dry to count)
+	$(PY) -m trailheadrx sweep --dry
+
 deploy:           ## ship to Fly.io (see docs/DEPLOY.md)
 	fly deploy
 
 web:              ## run the website locally at http://127.0.0.1:8000
 	$(PY) -m uvicorn trailheadrx.web.app:app --reload --port 8000
 
-.PHONY: setup ingest status eval test web deploy
+.PHONY: setup ingest status eval test web deploy refresh sweep

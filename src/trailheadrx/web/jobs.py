@@ -76,41 +76,49 @@ class JobRunner:
             del self._jobs[jid]
 
     def _run(self, job: Job) -> None:
-        from ..pipeline import answer
         job.status = "running"
-        r = job.request
         try:
-            cached = _cache_get(r)
-            if cached:
-                job.answer, job.table, job.plans, job.trace = cached
-                job.status = "done"
-                return
-            # The class comparison does not depend on the main answer, so it
-            # runs at the same time rather than after: ~1 minute saved.
-            table_future = plans_future = None
-            if r.get("compare"):
-                from ..compare import compare_class
-                table_future = self._side.submit(compare_class, r["drug"], r["payer"], r["lob"])
-            if r.get("plans"):
-                from ..compare import compare_plans
-                plans_future = self._side.submit(compare_plans, r["drug"], r["payer"], r["lob"])
-            job.answer = _with_one_retry(lambda: answer(r["question"], r["payer"], r["lob"], r["drug"],
-                                                        self_funded=r.get("self_funded"), use_judge=True))
-            if table_future is not None:
-                name, rows, _calls = table_future.result()
-                if job.answer.outcome == "answered":
-                    job.table = (name, rows)
-            if plans_future is not None:
-                rows, _calls = plans_future.result()
-                if job.answer.outcome == "answered":
-                    job.plans = rows
-            job.trace = _find_trace(job.answer.trace_id)
+            job.answer, job.table, job.plans, job.trace = compute(job.request, side=self._side)
             job.status = "done"
-            if job.answer.outcome == "answered":
-                _cache_put(r, (job.answer, job.table, job.plans, job.trace))
         except Exception as e:   # the page must never hang on an exception in a worker
             job.error = f"{type(e).__name__}: {e}"
             job.status = "failed"
+
+
+def compute(r: dict, side: ThreadPoolExecutor | None = None, use_cache: bool = True):
+    """One request → (answer, class table, other-plans rows, trace). Shared by
+    the web worker and the nightly precompute, so both produce the same thing
+    and both fill the same cache."""
+    from ..pipeline import answer
+    if use_cache:
+        cached = _cache_get(r)
+        if cached:
+            return cached
+    side = side or ThreadPoolExecutor(max_workers=2)
+    # The comparisons do not depend on the main answer, so they run beside it.
+    table_future = plans_future = None
+    if r.get("compare"):
+        from ..compare import compare_class
+        table_future = side.submit(compare_class, r["drug"], r["payer"], r["lob"])
+    if r.get("plans"):
+        from ..compare import compare_plans
+        plans_future = side.submit(compare_plans, r["drug"], r["payer"], r["lob"])
+    ans = _with_one_retry(lambda: answer(r["question"], r["payer"], r["lob"], r["drug"],
+                                         self_funded=r.get("self_funded"), use_judge=True))
+    table = plans = None
+    if table_future is not None:
+        name, rows, _calls = table_future.result()
+        if ans.outcome == "answered":
+            table = (name, rows)
+    if plans_future is not None:
+        rows, _calls = plans_future.result()
+        if ans.outcome == "answered":
+            plans = rows
+    trace = _find_trace(ans.trace_id)
+    result = (ans, table, plans, trace)
+    if ans.outcome == "answered":
+        _cache_put(r, result)
+    return result
 
 
 def _with_one_retry(fn):
@@ -120,8 +128,7 @@ def _with_one_retry(fn):
     try:
         return fn()
     except Exception as e:
-        name = type(e).__name__
-        if name in ("APITimeoutError", "APIConnectionError"):
+        if type(e).__name__ in ("APITimeoutError", "APIConnectionError"):
             time.sleep(3)
             return fn()
         raise
@@ -136,6 +143,24 @@ def _with_one_retry(fn):
 
 _CACHE: dict[tuple, tuple[float, tuple]] = {}
 _CACHE_LOCK = threading.Lock()
+
+
+def _cache_dir():
+    """Disk copy of the cache, so a restart or redeploy keeps last night's
+    precomputed answers. TRAILHEADRX_CACHE_DIR (the /data volume on the
+    server); unset on a laptop means memory only."""
+    import os
+    from pathlib import Path
+    d = os.environ.get("TRAILHEADRX_CACHE_DIR")
+    return Path(d) if d else None
+
+
+def _cache_file(k: tuple):
+    import hashlib
+    d = _cache_dir()
+    if d is None:
+        return None
+    return d / (hashlib.sha256(repr(k).encode()).hexdigest()[:24] + ".pkl")
 
 
 def _cache_key(r: dict) -> tuple | None:
@@ -154,6 +179,17 @@ def _cache_get(r: dict):
         if hit and time.time() - hit[0] < ttl:
             return hit[1]
         _CACHE.pop(k, None)
+    f = _cache_file(k)
+    if f is not None and f.exists() and time.time() - f.stat().st_mtime < ttl:
+        import pickle
+        try:
+            with open(f, "rb") as fh:
+                value = pickle.load(fh)
+            with _CACHE_LOCK:
+                _CACHE[k] = (f.stat().st_mtime, value)
+            return value
+        except Exception:
+            return None
     return None
 
 
@@ -163,6 +199,15 @@ def _cache_put(r: dict, value) -> None:
         return
     with _CACHE_LOCK:
         _CACHE[k] = (time.time(), value)
+    f = _cache_file(k)
+    if f is not None:
+        import pickle
+        try:
+            f.parent.mkdir(parents=True, exist_ok=True)
+            with open(f, "wb") as fh:
+                pickle.dump(value, fh)
+        except Exception:
+            pass   # disk cache is a convenience; memory still has it
 
 
 def _find_trace(trace_id: str) -> dict | None:

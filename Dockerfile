@@ -21,6 +21,9 @@ ENV PYTHONPATH=/app/src \
     HF_HOME=/app/.hf \
     TRAILHEADRX_AUDIT_DIR=/data/audit \
     TRAILHEADRX_REQUESTED_PLANS=/data/requested_plans.jsonl \
+    TRAILHEADRX_REFRESH_STATE=/data/refresh_state.json \
+    TRAILHEADRX_CACHE_DIR=/data/cache \
+    TRAILHEADRX_SWEEP_RECORD=/data/sweep_record.json \
     TRAILHEADRX_HTTPS=1 \
     PORT=8080
 

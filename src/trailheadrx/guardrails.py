@@ -125,6 +125,17 @@ def _parse_date(s: str) -> date | None:
     return None
 
 
+def _checked_on(fname: str):
+    try:
+        from .refresh import load_state
+        for v in load_state().values():
+            if v.get("kind") == "policy" and v.get("file") == fname and v.get("checked"):
+                return _parse_date(v["checked"])
+    except Exception:
+        return None
+    return None
+
+
 def freshness_warnings(chunks) -> list[str]:
     """One warning per source document whose date is older than the threshold.
     Policies are dated by effective/review date; the threshold is generous for
@@ -143,6 +154,12 @@ def freshness_warnings(chunks) -> list[str]:
         if getattr(c, "line_of_business", "") == "reference":
             continue
         d = _parse_date(c.effective_or_reviewed) or _parse_date(getattr(c, "downloaded_on", "") or "")
+        # The refresh job's "we looked and it had not changed" date counts as
+        # currency too: a policy re-checked last night is current even if its
+        # own effective date is old.
+        checked = _checked_on(c.file)
+        if checked and (d is None or checked > d):
+            d = checked
         if d is None:
             out.append(f"We could not read the date on one of your plan's documents ('{c.title}'); it is worth "
                        f"checking that it is the current version.")

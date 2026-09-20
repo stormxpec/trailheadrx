@@ -48,7 +48,7 @@
   {% macro pathgrid(R, first_html, months, b_text) %}
     <div class="pathrow head"><div>Path</div><div>What it takes</div><div>Estimated timing</div><div>What you pay · maker support</div></div>
 
-    <div class="pathrow">
+    <div class="pathrow{% if 'A' in focus.paths %} focus{% endif %}">
       <div class="pathname"><span class="ptag">A</span>Your plan's path</div>
       <div class="pathhow">
         {{ first_html }}
@@ -59,7 +59,7 @@
       <div class="pathcost">{% if R.card %}{% if R.card.available %}{{ R.card.cost }} <span class="small muted">with the <a href="{{ R.card.url }}" rel="noopener">{{ R.card.title }}</a></span>{% else %}your plan's copay <span class="small muted">(savings card not allowed on your plan type)</span>{% endif %}{% else %}your plan's copay{% endif %}</div>
     </div>
 
-    <div class="pathrow">
+    <div class="pathrow{% if 'B' in focus.paths %} focus{% endif %}">
       <div class="pathname"><span class="ptag">B</span>A shorter path</div>
       <div class="pathhow"><b>Your doctor asks for an exception</b><span>— {{ b_text }}</span></div>
       <div class="pathtime"><span class="tnum">2<small>weeks</small></span></div>
@@ -67,7 +67,7 @@
     </div>
 
     {% if rows.c %}
-    <div class="pathrow{% if not R.dtc %} na{% endif %}">
+    <div class="pathrow{% if not R.dtc %} na{% endif %}{% if 'C' in focus.paths %} focus{% endif %}">
       <div class="pathname"><span class="ptag">C</span>Skip the path altogether</div>
       {% if R.dtc %}
       <div class="pathhow"><b><a href="{{ R.dtc.url }}" rel="noopener">{{ R.dtc.title }}</a></b><span>— {{ R.dtc.detail }}</span><span class="sub">Trade-off: {{ R.dtc.tradeoff }}</span></div>
@@ -82,7 +82,7 @@
     {% endif %}
 
     {% if rows.d %}
-    <div class="pathrow{% if not (R.pap and R.pap.available) %} na{% endif %}">
+    <div class="pathrow{% if not (R.pap and R.pap.available) %} na{% endif %}{% if 'D' in focus.paths %} focus{% endif %}">
       <div class="pathname"><span class="ptag">D</span>Free medicine if you qualify</div>
       <div class="pathhow">{{ papcell(R) }}</div>
       {% if R.pap and R.pap.available %}
@@ -92,6 +92,19 @@
       <div class="pathtime"><span class="tnum muted">—</span></div>
       <div class="pathcost muted">not available</div>
       {% endif %}
+    </div>
+    {% endif %}
+
+    {% if 'E' in focus.paths %}
+    <div class="pathrow focus">
+      <div class="pathname"><span class="ptag">E</span>Appeal the denial</div>
+      <div class="pathhow">
+        <b>Get the denial in writing, then appeal in order</b>
+        <span>→ ask the plan for the written reason → your doctor resubmits with what was missing, or asks for a peer-to-peer call → internal appeal with the plan → if refused, independent external review.</span>
+        <span class="sub">The plan's deadlines for each step are under "Timing and appeals" below, from the law and your plan's own documents.</span>
+      </div>
+      <div class="pathtime"><span class="tnum">see<small>timing below</small></span></div>
+      <div class="pathcost">your plan's copay, if the denial is overturned</div>
     </div>
     {% endif %}
   {% endmacro %}
@@ -110,6 +123,7 @@
   {% if a.routes %}
   {% set R = {} %}{% for r in a.routes %}{% set _ = R.update({r.key: r}) %}{% endfor %}
   <h2>Your path options to {{ a.drug or job.request.drug }}</h2>
+  {% if focus.text %}<div class="callout pointer"><b>Start here.</b> {{ focus.text }}</div>{% endif %}
   <div class="card paths">
     <p class="small muted" style="margin-top:0">Each path, top to bottom: what it takes, how long, and what it costs you. The plan's path first; the routes around it below. Times for the maker's routes are typical, not from your plan's documents. Letters are labels, not an order.</p>
     {% set first_html %}<b>{{ (a.summary_points[0] if a.summary_points else 'Meet the plan\'s first requirement')|truncate(90) }}</b>{% endset %}
@@ -264,7 +278,7 @@
   <h2>The details</h2>
   <p class="small muted toolbar"><span>{% if expand %}<a href="/a/{{ job.id }}">Collapse all</a>{% else %}<a href="/a/{{ job.id }}?expand=1">Expand all</a>{% endif %}</span><span>Statements with a number in brackets are backed by your plan's own documents, listed at the end.</span></p>
   {% for title, group in sections %}
-  <details class="sec"{% if expand %} open{% endif %}>
+  <details class="sec"{% if expand or title in focus.open %} open{% endif %}>
     <summary><h2>{{ title }}</h2><span class="count">{{ group|length }}</span><span class="toggle"></span></summary>
     <div class="card"><ul>{% for c in group %}<li>{{ c.text }}{{ cites(c) }}</li>{% endfor %}</ul></div>
   </details>

@@ -128,3 +128,36 @@ def test_lead_time_is_computed_in_code_from_trial_lengths():
     assert months_from_steps([{"what": "a", "days": 90}]) == (3, 4, 90)
     assert months_from_steps([{"what": "a", "days": None}]) == (None, None, 0)   # no length stated → no estimate
     assert months_from_steps([]) == (None, None, 0)
+
+
+def test_refresh_fingerprint_ignores_html_noise_and_reindexes(indexed, tmp_path, monkeypatch):
+    from trailheadrx import refresh
+    a = b"<html><head><script>var nonce='abc'</script></head><body><p>Step therapy: try two preventives.</p></body></html>"
+    b = b"<html><head><script>var nonce='xyz'</script></head><body><p>Step  therapy: try two preventives.</p></body></html>"
+    c = b"<html><body><p>Step therapy: try ONE preventive.</p></body></html>"
+    assert refresh._fingerprint(a, "html") == refresh._fingerprint(b, "html")     # script noise + whitespace ignored
+    assert refresh._fingerprint(a, "html") != refresh._fingerprint(c, "html")     # real change seen
+    # state file lives where TRAILHEADRX_REFRESH_STATE points
+    monkeypatch.setenv("TRAILHEADRX_REFRESH_STATE", str(tmp_path / "state.json"))
+    refresh.save_state({"https://x": {"kind": "policy", "file": "f.html", "checked": "2026-09-21"}})
+    assert refresh.last_checked() == "2026-09-21"
+    # remove_document really empties the index for that file
+    from trailheadrx.ingest import remove_document
+    from trailheadrx.retrieve import open_db
+    conn = open_db()
+    row = dict(conn.execute("SELECT payer,line_of_business,benefit_type,scope,title,policy_id,url,"
+                            "effective_or_reviewed,file,downloaded_on,status FROM documents LIMIT 1").fetchone())
+    before = conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+    n = remove_document(conn, row["file"])
+    conn.commit()
+    assert n > 0 and conn.execute("SELECT COUNT(*) FROM chunks").fetchone()[0] == before - n
+    conn.close()
+    # put it back exactly as it was so later tests still have their fixture
+    from trailheadrx.ingest import ingest
+    ingest(documents=[row])
+
+
+def test_refresh_email_is_optional(monkeypatch):
+    from trailheadrx import refresh
+    monkeypatch.delenv("RESEND_API_KEY", raising=False)
+    assert refresh.send_email("s", "b") is False

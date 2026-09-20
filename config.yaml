@@ -45,3 +45,6 @@ web:                       # session 4: the form in front of the pipeline
   job_workers: 2           # answers computed at once; the rest queue
   job_ttl_minutes: 60      # finished answers are kept in memory this long, then dropped (nothing is written)
   cache_hours: 24          # a repeat of the same menu-only request (no free text) is served from memory this long
+
+precompute:                # nightly sweep (session 5): warm the cache, catch drift
+  daily_budget_usd: 3.0    # the sweep stops at this estimated spend and resumes next night

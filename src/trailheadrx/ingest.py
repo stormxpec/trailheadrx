@@ -52,6 +52,14 @@ def parse_pdf(path: Path) -> list[Page]:
     return pages
 
 
+def html_text(raw: str) -> str:
+    """Visible text of an HTML document: scripts, styles, navigation and tags
+    stripped. Used by the indexer and by the refresh job's fingerprint."""
+    raw = re.sub(r"(?is)<(script|style|nav|footer|header).*?</\1>", " ", raw)
+    text = re.sub(r"<[^>]+>", " ", raw)
+    return html.unescape(text)
+
+
 def parse_html(path: Path) -> list[Page]:
     raw = path.read_text(encoding="utf-8", errors="ignore")
     raw = re.sub(r"(?is)<(script|style|nav|footer|header).*?</\1>", " ", raw)
@@ -305,6 +313,22 @@ def ingest(rebuild: bool = False, documents: list[dict] | None = None) -> dict:
 
     conn.close()
     return counts
+
+
+def remove_document(conn: sqlite3.Connection, fname: str) -> int:
+    """Drop one document and everything indexed from it, so a refreshed file
+    can be indexed in its place. Returns the number of chunks removed."""
+    row = conn.execute("SELECT id FROM documents WHERE file=?", (fname,)).fetchone()
+    if not row:
+        return 0
+    doc_id = row["id"] if hasattr(row, "keys") else row[0]
+    ids = [r[0] for r in conn.execute("SELECT id FROM chunks WHERE document_id=?", (doc_id,))]
+    for cid in ids:
+        conn.execute("DELETE FROM embeddings WHERE chunk_id=?", (cid,))
+        conn.execute("DELETE FROM chunks_fts WHERE rowid=?", (cid,))
+    conn.execute("DELETE FROM chunks WHERE document_id=?", (doc_id,))
+    conn.execute("DELETE FROM documents WHERE id=?", (doc_id,))
+    return len(ids)
 
 
 def index_summary() -> list[dict]:

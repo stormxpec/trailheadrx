@@ -1,9 +1,11 @@
-"""Command line. Four verbs:
+"""Command line. Six verbs:
 
   python -m trailheadrx ingest [--rebuild]      index every downloaded document
   python -m trailheadrx ask --payer ... --lob ... --drug ... "question"
   python -m trailheadrx status                   what is indexed, dry-run or live
   python -m trailheadrx trace [id]               why the verifier kept or dropped each claim
+  python -m trailheadrx refresh [--only ...]     re-fetch every source, re-index changes, email
+  python -m trailheadrx sweep [--pairs N]        precompute the menu, report drift (costs money)
 
 Run from the repo root with the virtual environment active.
 """
@@ -35,6 +37,14 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("status", help="index summary and mode")
 
+    s = sub.add_parser("refresh", help="re-fetch every source, re-index what changed, email if configured")
+    s.add_argument("--only", choices=["policies", "programs"], help="limit to one kind of source")
+    s.add_argument("--no-email", action="store_true", help="print the report only")
+    s = sub.add_parser("sweep", help="precompute the menu of answers and report drift (costs money)")
+    s.add_argument("--pairs", type=int, help="only the N most-asked plan × medicine pairs")
+    s.add_argument("--budget", type=float, help="stop after this much estimated spend (USD)")
+    s.add_argument("--dry", action="store_true", help="count what would run; no model calls")
+    s.add_argument("--no-email", action="store_true")
     s = sub.add_parser("trace", help="show why the verifier kept or dropped each claim (latest answer, or a trace id)")
     s.add_argument("trace_id", nargs="?", help="12-character reference from the answer page; default: the latest")
 
@@ -56,6 +66,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  {r['chunks']:4d} chunks  {r['payer']}  [{r['line_of_business']}/{r['benefit_type']}]  {r['file']}")
         return 0
 
+    if a.cmd == "refresh":
+        from .refresh import refresh, run_and_notify
+        if a.no_email:
+            print(refresh(only=a.only).text())
+        else:
+            run_and_notify(only=a.only)
+        return 0
+    if a.cmd == "sweep":
+        from .precompute import run_and_notify, sweep
+        if a.dry or a.no_email:
+            print(sweep(pairs=a.pairs, budget_usd=a.budget, dry=a.dry).text())
+        else:
+            run_and_notify(pairs=a.pairs, budget_usd=a.budget)
+        return 0
     if a.cmd == "trace":
         from .audit import read_all
         recs = read_all()

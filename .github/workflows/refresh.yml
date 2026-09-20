@@ -1,0 +1,21 @@
+# Nightly corpus refresh, run INSIDE the live Fly machine so it sees /data and
+# the same index the site answers from. GitHub is only the alarm clock.
+# Needs one repository secret: FLY_API_TOKEN (fly tokens create deploy -x 999999h).
+name: corpus refresh
+on:
+  schedule:
+    - cron: "17 9 * * *"        # 09:17 UTC daily = 5:17 am Eastern
+  workflow_dispatch: {}         # "Run workflow" button for a manual check
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: run the refresh on the app machine
+        run: flyctl ssh console -a trailheadrx -C "python -m trailheadrx refresh"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: precompute the menu and report drift (budget-capped in config.yaml)
+        run: flyctl ssh console -a trailheadrx -C "python -m trailheadrx sweep --pairs 12"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

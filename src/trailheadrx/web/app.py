@@ -142,8 +142,26 @@ def _drugs() -> list[dict]:
 
 
 def _page(request: Request, name: str, status: int = 200, **ctx) -> HTMLResponse:
-    ctx.update({"request": request, "dry_run": config.dry_run()})
+    ctx.update({"request": request, "dry_run": config.dry_run(), "docs_checked": _docs_checked()})
     return templates.TemplateResponse(request, name, ctx, status_code=status)
+
+
+def _docs_checked() -> str:
+    """'Plan documents last checked <date>' for the footer: from the refresh
+    job's state, or the newest download date in the manifest before the job
+    has ever run."""
+    try:
+        from ..refresh import last_checked
+        d = last_checked()
+        if d:
+            return d
+    except Exception:
+        pass
+    try:
+        from ..retrieve import load_manifest
+        return max(str(x.get("downloaded_on") or "") for x in load_manifest() if x.get("status") == "found")
+    except Exception:
+        return ""
 
 
 def _sections(answer) -> list[tuple[str, list[dict]]]:
@@ -254,7 +272,8 @@ def ask(request: Request, plan: str = Form(...), plan_other: str = Form(""), dru
     if choice.self_funded is True:
         sf = True                        # the card name settles it (Meritain, UMR)
     job = runner.submit({"question": question.strip(), "payer": choice.payer, "lob": choice.lob, "drug": drug,
-                         "self_funded": sf, "compare": bool(compare), "free_text": bool(own)})
+                         "self_funded": sf, "compare": bool(compare), "free_text": bool(own),
+                         "preset": "other" if own else preset})
     return RedirectResponse(f"/a/{job.id}", status_code=303)
 
 
@@ -322,7 +341,7 @@ def show(request: Request, job_id: str, expand: str = ""):
     a = job.answer
     return _page(request, "result.html", job=job, a=a, sections=_sections(a), wait_text=_wait_text(a),
                  expand=(expand == "1"), compare_paths=_compare_paths(job), wait=_wait(job),
-                 rows=_path_rows(job), plan_rows=_plan_rows(job),
+                 rows=_path_rows(job), plan_rows=_plan_rows(job), focus=_focus(job),
                  table=job.table, trace=job.trace or {},
                  chunks=(job.trace or {}).get("stages", []) and _packet_from_trace(job.trace))
 
@@ -344,6 +363,27 @@ def _wait(job) -> dict | None:
     if w and w.get("months_high"):
         return w
     return None
+
+
+# Which path the question points at. The preset is a menu choice, so this is a
+# lookup, not a judgment: the model never decides what to emphasize.
+FOCUS = {
+    "try_first": {"paths": ["A"], "open": ["What you need to try first"],
+                  "text": "You asked what to try first. That is path A — the plan's own steps — and the lead time above is how long they take from scratch."},
+    "doctor":    {"paths": ["A"], "open": ["What your doctor needs to show"],
+                  "text": "You asked what your doctor needs to show. That is path A; the specifics are under \"What your doctor needs to show\" below."},
+    "how_long":  {"paths": ["B"], "open": ["Timing and appeals"],
+                  "text": "You asked how long, and whether there is a faster way. Path A is the plan's clock; path B is the faster way when you qualify for it."},
+    "appeal":    {"paths": ["B", "E"], "open": ["Timing and appeals"],
+                  "text": "You asked about a denial. From where you are, path B (an exception request) is the fastest route, and path E is the appeal, with the plan's deadlines under \"Timing and appeals\" below."},
+    "cost":      {"paths": ["C", "D"], "open": [],
+                  "text": "You asked about cost. The right-hand column is what you pay on each path; paths C and D are the routes that do not go through the plan at all."},
+}
+
+
+def _focus(job) -> dict:
+    f = FOCUS.get(job.request.get("preset") or "")
+    return dict(f) if f else {"paths": [], "open": [], "text": ""}
 
 
 def _plan_rows(job) -> list[dict] | None:

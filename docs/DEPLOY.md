@@ -98,8 +98,9 @@ at Lilly starts testing.
 
 ## Updating
 
-Code or corpus change → `fly deploy`. Corpus refresh without a code change is
-the same command; the daily refresh job on the backlog will do it in place.
+Code change → `fly deploy`. Corpus changes arrive on their own through the
+daily refresh (below); a manual `fly deploy` also re-indexes whatever is in
+your local corpus folder.
 
 Secrets change → `fly secrets set NAME=value` (restarts the machine).
 
@@ -131,3 +132,63 @@ the same as on the laptop.
   `fly secrets set` line is the usual cause.
 - Roll back: `fly releases` lists deploys; `fly deploy --image <previous image>`
   puts one back.
+
+## Daily corpus refresh (session 5, part 2)
+
+`python -m trailheadrx refresh` re-fetches every policy document and every
+maker program page, fingerprints the content (visible text for HTML, bytes
+for PDF), saves and re-indexes any policy that changed, records a checked-on
+date for everything, and emails a report when something changed or a fetch
+newly failed. A quiet night sends nothing. Program pages are never edited
+automatically: the report tells you which one to re-read, because the terms
+in `corpus/programs/manifest.yaml` are hand-verified.
+
+State: `refresh_state.json` (on the server: `/data/refresh_state.json`), keyed
+by URL — last hash, last checked, last changed, last error. The footer of
+every page shows "Plan documents last checked <date>" from it.
+
+Email uses Resend (resend.com — free tier is plenty). Create an account, make
+an API key, then:
+
+```bash
+fly secrets set RESEND_API_KEY="re_..." REFRESH_EMAIL_TO="stormerb@gmail.com"
+```
+
+Until a sending domain is verified, Resend delivers from `onboarding@resend.dev`
+to the account's own address only, which is exactly this use. To send from
+`@trailheadrx.com` later, verify the domain in Resend (three DNS records at
+GoDaddy) and set `REFRESH_EMAIL_FROM="Trailhead Rx <refresh@trailheadrx.com>"`.
+
+Schedule: `.github/workflows/refresh.yml` runs daily at 5:17 am Eastern and
+executes the command inside the live machine over `fly ssh`, so it uses the
+same index and disk the site does. One-time setup:
+
+```bash
+fly tokens create deploy -x 999999h        # prints a token; copy it
+```
+
+GitHub → repo → Settings → Secrets and variables → Actions → New repository
+secret → name `FLY_API_TOKEN`, value the token. The Actions tab then has a
+"corpus refresh" workflow with a "Run workflow" button for a manual check.
+
+Run it by hand on the server any time: `fly ssh console -C "python -m trailheadrx refresh"`.
+On the laptop: `make refresh` (prints the report; emails only if the two
+Resend variables are in your `.env`).
+
+## Nightly sweep (session 5, part 3)
+
+`python -m trailheadrx sweep` answers the menu ahead of time — every held plan
+× medicine × preset question — through the same `compute()` the website uses,
+so those requests are served instantly, and compares each answer's summary,
+numbered steps and lead-time months with the previous sweep's to flag drift.
+The answers are written to `/data/cache` on the server (`TRAILHEADRX_CACHE_DIR`),
+so a restart keeps them; the sweep's own record is `/data/sweep_record.json`.
+
+Cost control: `precompute.daily_budget_usd` in config.yaml (default $3) stops
+the sweep for the night; it resumes where it left off the next night. The
+GitHub workflow runs it with `--pairs 12` — the twelve most-asked plan ×
+medicine pairs from the audit trace — so early on it costs cents. Widen it in
+`.github/workflows/refresh.yml` when the corpus and the audience grow. The
+same Resend secrets carry the drift report; a quiet night sends nothing.
+
+`make sweep` on the laptop is a dry run (counts what would run, no model calls).

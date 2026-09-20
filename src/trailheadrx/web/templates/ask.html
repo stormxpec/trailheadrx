@@ -25,13 +25,14 @@
       </select>
       <small class="muted">Only plans whose rules we have loaded are listed, with the kind of plan we hold for each. Use the name on your insurance card.</small>
       <input type="text" id="plan_other" name="plan_other" placeholder="If your plan isn't listed: the plan name from your card (for example, Meritain, UMR, Cigna)" autocomplete="off">
-      <label for="self_funded">Employer plan: is it self-funded?</label>
+      <label for="self_funded">For employer or individual plans only (not Medicare or Medicaid): do you know if your plan is self-funded?</label>
       <select id="self_funded" name="self_funded">
         <option value="unknown">I don't know (most people don't)</option>
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
+        <option value="no">No — the insurance company takes the risk</option>
+        <option value="yes">Yes — my employer pays its own claims</option>
+        <option value="na">Not applicable — my plan is Medicare or Medicaid</option>
       </select>
-      <small class="muted">Self-funded employer plans follow federal rules (ERISA) instead of Ohio's step-therapy law. HR or the plan's member services line can tell you. Skip this if your plan isn't through an employer.</small>
+      <small class="muted">Why we ask: a self-funded employer plan follows federal rules (ERISA) instead of Ohio's step-therapy law, which changes path B. HR or the member services number on your card can tell you. If you pick a Medicare or Medicaid plan above, this question is ignored.</small>
     </div>
   </div>
 

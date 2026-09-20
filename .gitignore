@@ -18,6 +18,8 @@ index/
 *.db
 governance/audit/
 governance/requested_plans.jsonl
+corpus/refresh_state.json
+governance/sweep_record.json
 uploads/
 tmp/
 

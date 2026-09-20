@@ -204,3 +204,37 @@ def test_security_headers_and_fly_ip(client):
         def __init__(self, h): self.headers, self.client = h, None
     assert webapp._ip(R({"fly-client-ip": "203.0.113.9", "x-forwarded-for": "10.0.0.1"})) == "203.0.113.9"
     assert webapp._ip(R({"x-forwarded-for": "10.0.0.1, 10.0.0.2"})) == "10.0.0.1"
+
+
+def test_precompute_menu_and_dry_sweep(client, tmp_path, monkeypatch):
+    from trailheadrx import precompute
+    monkeypatch.setenv("TRAILHEADRX_SWEEP_RECORD", str(tmp_path / "rec.json"))
+    m = precompute.menu()
+    assert m and all(not r["free_text"] and not r["compare"] for r in m)
+    assert {r["preset"] for r in m} == {"try_first", "doctor", "how_long", "appeal", "cost"}
+    rep = precompute.sweep(dry=True, budget_usd=100.0)
+    assert rep.computed + rep.skipped_cached == len(m) and not rep.failed
+
+
+def test_disk_cache_survives_a_new_process(client, tmp_path, monkeypatch):
+    from trailheadrx.web import jobs
+    monkeypatch.setenv("TRAILHEADRX_CACHE_DIR", str(tmp_path / "cache"))
+    r = {"payer": "UnitedHealthcare", "lob": "commercial", "drug": "Emgality", "question": "q?",
+         "self_funded": None, "compare": False, "plans": False, "free_text": False}
+    jobs._cache_put(r, ("answer-object", None, None, {}))
+    jobs._CACHE.clear()                                   # forget memory; disk must answer
+    assert jobs._cache_get(r)[0] == "answer-object"
+    assert jobs._cache_get(dict(r, free_text=True)) is None   # free text is never cached
+
+
+def test_question_points_at_a_path(client):
+    _sign_in(client)
+    r = client.post("/ask", data={"plan": "UnitedHealthcare|commercial|", "drug": "Emgality", "preset": "appeal"},
+                    follow_redirects=False)
+    page = _wait(client, r.headers["location"])
+    assert "Start here." in page.text and "You asked about a denial" in page.text
+    assert "Appeal the denial" in page.text                                   # row E only for the appeal question
+    r2 = client.post("/ask", data={"plan": "UnitedHealthcare|commercial|", "drug": "Emgality", "preset": "cost"},
+                     follow_redirects=False)
+    page2 = _wait(client, r2.headers["location"])
+    assert "You asked about cost" in page2.text and "Appeal the denial" not in page2.text
