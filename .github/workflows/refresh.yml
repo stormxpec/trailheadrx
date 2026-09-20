@@ -1,6 +1,8 @@
-# Nightly corpus refresh, run INSIDE the live Fly machine so it sees /data and
-# the same index the site answers from. GitHub is only the alarm clock.
-# Needs one repository secret: FLY_API_TOKEN (fly tokens create deploy -x 999999h).
+# Nightly corpus refresh and sweep, run INSIDE the live Fly machine so they see
+# /data and the same index the site answers from. GitHub is only the alarm
+# clock. `fly machine exec` goes through Fly's API (no SSH tunnel needed from
+# a GitHub runner). Needs one repository secret: FLY_API_TOKEN
+# (fly tokens create deploy -x 999999h).
 name: corpus refresh
 on:
   schedule:
@@ -9,13 +11,18 @@ on:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
     steps:
       - uses: superfly/flyctl-actions/setup-flyctl@master
+      - name: find the app machine
+        id: machine
+        run: |
+          ID=$(flyctl machines list -a trailheadrx --json | python3 -c "import json,sys; print(json.load(sys.stdin)[0]['id'])")
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+      - name: wake it if suspended
+        run: flyctl machine start ${{ steps.machine.outputs.id }} -a trailheadrx || true
       - name: run the refresh on the app machine
-        run: flyctl ssh console -a trailheadrx -C "python -m trailheadrx refresh"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl machine exec ${{ steps.machine.outputs.id }} "python -m trailheadrx refresh" -a trailheadrx --timeout 600
       - name: precompute the menu and report drift (budget-capped in config.yaml)
-        run: flyctl ssh console -a trailheadrx -C "python -m trailheadrx sweep --pairs 12"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+        run: flyctl machine exec ${{ steps.machine.outputs.id }} "python -m trailheadrx sweep --pairs 12" -a trailheadrx --timeout 3600

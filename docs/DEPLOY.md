@@ -160,7 +160,7 @@ to the account's own address only, which is exactly this use. To send from
 GoDaddy) and set `REFRESH_EMAIL_FROM="Trailhead Rx <refresh@trailheadrx.com>"`.
 
 Schedule: `.github/workflows/refresh.yml` runs daily at 5:17 am Eastern and
-executes the command inside the live machine over `fly ssh`, so it uses the
+runs the commands inside the live machine with `fly machine exec` (Fly's API, no SSH tunnel), so it uses the
 same index and disk the site does. One-time setup:
 
 ```bash
